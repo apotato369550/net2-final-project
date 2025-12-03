@@ -1,0 +1,47 @@
+# router Subinterface configs:
+
+!
+!
+interface FastEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface FastEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 100.100.10.1 255.255.255.0
+ ip helper-address 100.100.99.2
+!
+interface FastEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 100.100.20.1 255.255.255.0
+ ip helper-address 100.100.99.2
+!
+interface FastEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 100.100.30.1 255.255.255.0
+ ip helper-address 100.100.99.2
+!
+interface FastEthernet0/1.99
+ encapsulation dot1Q 99 native
+ ip address 100.100.99.1 255.255.255.0
+!
+interface FastEthernet0/1.150
+ encapsulation dot1Q 150
+ ip address 100.100.150.1 255.255.255.0
+
+# ipv6 addressing
+VLAN 10  -              2001:DB8:B:10::/64
+VLAN 30  -               2001:DB8:B:30::/64
+VLAN 40  -              2001:DB8:B:40::/64
+VLAN 70  -        2001:DB8:B:70::/64
+VLAN 99  -             2001:DB8:B:99::/64
+VLAN 150 -                  2001:DB8:B:150::/64
+
+# goal: slaac

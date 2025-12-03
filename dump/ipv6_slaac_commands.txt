@@ -1,0 +1,103 @@
+================================================================================
+                    IPv6 SLAAC CONFIGURATION COMMANDS
+================================================================================
+GOAL: Enable Stateless Address Autoconfiguration (SLAAC) for IPv6
+RESULT: Devices will automatically receive IPv6 addresses
+
+--------------------------------------------------------------------------------
+                    STEP 1: ENABLE IPv6 ROUTING (REQUIRED!)
+--------------------------------------------------------------------------------
+enable
+configure terminal
+ipv6 unicast-routing
+exit
+
+--------------------------------------------------------------------------------
+                    STEP 2: CONFIGURE IPv6 ON SUBINTERFACES
+--------------------------------------------------------------------------------
+configure terminal
+
+! VLAN 10 - 2001:DB8:B:10::/64
+interface fa0/1.10
+ipv6 address 2001:DB8:B:10::1/64
+ipv6 nd prefix 2001:DB8:B:10::/64
+no ipv6 nd suppress-ra
+exit
+
+! VLAN 20 - 2001:DB8:B:20::/64
+interface fa0/1.20
+ipv6 address 2001:DB8:B:20::1/64
+ipv6 nd prefix 2001:DB8:B:20::/64
+no ipv6 nd suppress-ra
+exit
+
+! VLAN 30 - 2001:DB8:B:30::/64
+interface fa0/1.30
+ipv6 address 2001:DB8:B:30::1/64
+ipv6 nd prefix 2001:DB8:B:30::/64
+no ipv6 nd suppress-ra
+exit
+
+! VLAN 99 - 2001:DB8:B:99::/64
+interface fa0/1.99
+ipv6 address 2001:DB8:B:99::1/64
+ipv6 nd prefix 2001:DB8:B:99::/64
+no ipv6 nd suppress-ra
+exit
+
+! VLAN 150 - 2001:DB8:B:150::/64
+interface fa0/1.150
+ipv6 address 2001:DB8:B:150::1/64
+ipv6 nd prefix 2001:DB8:B:150::/64
+no ipv6 nd suppress-ra
+exit
+
+exit
+
+--------------------------------------------------------------------------------
+                    STEP 3: SAVE CONFIGURATION
+--------------------------------------------------------------------------------
+copy running-config startup-config
+(Press Enter to confirm)
+
+--------------------------------------------------------------------------------
+                    VERIFICATION COMMANDS
+--------------------------------------------------------------------------------
+! Verify IPv6 interfaces are up and have addresses:
+show ipv6 interface brief
+
+! Verify IPv6 routing is enabled:
+show ipv6 interface fa0/1.10
+
+! Check Router Advertisement settings:
+show ipv6 interface fa0/1.10 | include ND
+
+! On client devices, check if they received IPv6 addresses:
+ipconfig (Windows) or ifconfig (Linux/Mac)
+
+! Test IPv6 connectivity:
+ping ipv6 2001:DB8:B:10::1
+
+================================================================================
+                    HOW SLAAC WORKS
+================================================================================
+1. Router sends Router Advertisements (RA) periodically
+2. Devices listen for RA messages
+3. Devices auto-configure IPv6 address using:
+   - Prefix from RA (e.g., 2001:DB8:B:10::/64)
+   - Their own MAC address (EUI-64 format)
+4. No DHCP server needed for addresses!
+
+Key Commands Explained:
+- ipv6 unicast-routing       : Enables IPv6 routing and RA sending
+- ipv6 address <addr>/64      : Sets the router's IPv6 address
+- ipv6 nd prefix              : Explicitly defines the prefix to advertise
+- no ipv6 nd suppress-ra      : Ensures Router Advertisements are sent
+
+================================================================================
+NOTES:
+- VLAN 40 and VLAN 70 were not in your original config, so I added them
+- If you don't need VLANs 40/70, skip those interface sections
+- Make sure your switches have the VLANs created and trunking configured
+- Devices must have IPv6 enabled to receive addresses via SLAAC
+================================================================================
