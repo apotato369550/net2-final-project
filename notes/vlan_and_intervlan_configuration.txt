@@ -1,0 +1,83 @@
+================================================================================
+                    VLAN AND INTER-VLAN ROUTING CONFIGURATION
+================================================================================
+
+
+conf t
+vlan 10
+name ACCOUNTING
+vlan 20
+name HR
+vlan 30
+name MARKETING
+vlan 99
+name MANAGEMENT
+
+int vlan 10
+ip add 200.130.107.2 255.255.255.128
+no shut
+
+int vlan 20
+ip add 200.131.231.129 255.255.255.128
+no shut
+
+int vlan 99
+ip add 200.131.232.2 255.255.255.128
+no shut
+
+conf t
+int range fa0/1-4
+switchport mode access
+switchport access vlan 10
+
+int range fa0/5-8
+switchport mode access
+switchport access vlan 20
+
+int range fa0/9-12
+switchport mode access
+switchport access vlan 30
+
+conf t
+int fa0/24
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+
+conf t
+int range fa0/1-12
+switchport port-security
+switchport port-security maximum 3
+switchport port-security violation shutdown
+switchport port-security mac-address sticky
+
+--- MANUAL MAC ADDRESS ENTRY (ALTERNATIVE) ---
+
+conf t
+int fa0/1
+switchport port-security mac-address 0050.7966.6800
+
+
+conf t
+int g0/1
+no shut
+
+int g0/1.10
+encapsulation dot1Q 10
+ip add 198.12.225.1 255.255.255.128
+no shut
+
+int g0/1.20
+encapsulation dot1Q 20
+ip add 198.12.226.1 255.255.255.128
+no shut
+
+int g0/1.30
+encapsulation dot1Q 30
+ip add 198.12.227.1 255.255.255.128
+no shut
+
+int g0/1.99
+encapsulation dot1Q 99 native
+ip add 198.12.228.1 255.255.255.128
+no shut

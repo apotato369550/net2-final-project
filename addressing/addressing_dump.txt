@@ -1,0 +1,38 @@
+main branch
+10 subnets: 8 offices, 1 administrative, 1 voice
+192.168.0.0/16
+
+10 vlans: 8 data (offices), 1 administrative (vlan 99), 1 voice vlan (150)
+
+branch 1
+5 subnets, 3 offices, 1 administrative, 1 voice
+100.100.0.0/16
+
+5 vlans: 3 data (offices), 1 administrative (vlan 99), 1 voice vlan (150)
+
+branch 2
+5 subnets, 3 offices, 1 administrative, 1 voice
+200.200.0.0/16
+
+5 vlans: 3 data (offices), 1 administrative (vlan 99), 1 voice vlan (150)
+
+Globe ISP
+3 subnets: 1 router to router, 1 router to main branch, 1 router to branch 1
+(default vlan)
+should follow a scheme like:
+10.10.10.0/30
+10.11.10.0/30
+10.12.10.0/30
+
+
+PLDT ISP
+3 subnets: 1 router to router, 1 router to main branch, 1 router to branch 2
+(default vlan)
+should follow a scheme like:
+10.10.10.0/30
+10.11.10.0/30
+10.12.10.0/30
+
+protocol:
+main branch - ospf
+branch 1 and 2, globe and pldt isp - eigrp

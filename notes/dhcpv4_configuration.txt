@@ -1,0 +1,179 @@
+================================================================================
+                    DHCPv4 CONFIGURATION
+================================================================================
+
+PURPOSE: Automatically assign IPv4 addresses, subnet masks, default gateways,
+         and DNS servers to network devices, eliminating manual configuration.
+
+
+
+================================================================================
+                    1. DHCP SERVER CONFIGURATION ON ROUTER
+================================================================================
+
+WHY: Router acts as DHCP server, assigning IPs to clients in each VLAN.
+     Must exclude static IPs (gateway, servers) from the pool.
+
+
+conf t
+ip dhcp excluded-address 198.12.225.1 198.12.225.10
+ip dhcp excluded-address 198.12.226.1 198.12.226.10
+ip dhcp excluded-address 198.12.227.1 198.12.227.10
+ip dhcp excluded-address 198.12.228.1 198.12.228.10
+
+ip dhcp pool ACCOUNTING
+network 198.12.225.0 255.255.255.128
+default-router 198.12.225.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool HR
+network 198.12.226.0 255.255.255.128
+default-router 198.12.226.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool MARKETING
+network 198.12.227.0 255.255.255.128
+default-router 198.12.227.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool MANAGEMENT
+network 198.12.228.0 255.255.255.128
+default-router 198.12.228.1
+dns-server 11.11.11.5
+end
+
+
+================================================================================
+                    2. DHCP RELAY AGENT (IP HELPER-ADDRESS)
+================================================================================
+
+WHY: DHCP uses broadcasts, which don't cross routers. If the DHCP server is on
+     a different subnet, configure "ip helper-address" on the router interface
+     to forward DHCP requests to the server.
+
+CONCEPT (from the-text.txt):
+  - Configure on the sub-interface or VLAN interface (the gateway interface)
+  - Points to the IP address of the DHCP server
+  - Router converts broadcast to unicast and forwards to server
+
+
+conf t
+int g0/1.10
+ip helper-address 10.28.0.1
+exit
+
+int g0/1.20
+ip helper-address 10.28.0.1
+exit
+
+int g0/1.30
+ip helper-address 10.28.0.1
+end
+
+
+================================================================================
+                    3. CONFIGURING LOOPBACK INTERFACE (OPTIONAL)
+================================================================================
+
+WHY: Loopback interfaces are virtual interfaces that never go down. Often used
+     for management, testing, or as a stable source IP for DHCP.
+
+CONCEPT (from the-text.txt):
+  - Create virtual interface that's always up
+  - Assign IP address (doesn't need to be in a subnet)
+
+
+conf t
+int loopback 0
+ip address 1.1.1.1 255.255.255.255
+end
+
+
+================================================================================
+                    COMPLETE DHCP SETUP EXAMPLE (ROUTER-ON-A-STICK)
+================================================================================
+
+This combines sub-interface configuration with DHCP server setup.
+
+--- COMPLETE EXAMPLE (READY TO COPY) ---
+
+conf t
+
+! Enable physical interface
+int g0/1
+no shut
+exit
+
+! Create sub-interfaces for each VLAN
+int g0/1.10
+encapsulation dot1Q 10
+ip add 198.12.225.1 255.255.255.128
+no shut
+exit
+
+int g0/1.20
+encapsulation dot1Q 20
+ip add 198.12.226.1 255.255.255.128
+no shut
+exit
+
+int g0/1.30
+encapsulation dot1Q 30
+ip add 198.12.227.1 255.255.255.128
+no shut
+exit
+
+int g0/1.99
+encapsulation dot1Q 99 native
+ip add 198.12.228.1 255.255.255.128
+no shut
+exit
+
+! Exclude static IP addresses
+ip dhcp excluded-address 198.12.225.1 198.12.225.10
+ip dhcp excluded-address 198.12.226.1 198.12.226.10
+ip dhcp excluded-address 198.12.227.1 198.12.227.10
+ip dhcp excluded-address 198.12.228.1 198.12.228.10
+
+! Create DHCP pools
+ip dhcp pool ACCOUNTING
+network 198.12.225.0 255.255.255.128
+default-router 198.12.225.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool HR
+network 198.12.226.0 255.255.255.128
+default-router 198.12.226.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool MARKETING
+network 198.12.227.0 255.255.255.128
+default-router 198.12.227.1
+dns-server 11.11.11.5
+exit
+
+ip dhcp pool MANAGEMENT
+network 198.12.228.0 255.255.255.128
+default-router 198.12.228.1
+dns-server 11.11.11.5
+end
+
+
+================================================================================
+                    QUICK REFERENCE COMMANDS
+================================================================================
+
+View DHCP bindings (leases):          show ip dhcp binding
+View DHCP pool statistics:            show ip dhcp pool
+View DHCP server statistics:          show ip dhcp server statistics
+View excluded addresses:              show ip dhcp excluded-address
+Clear DHCP bindings:                  clear ip dhcp binding *
+Release IP on client (Windows):       ipconfig /release
+Renew IP on client (Windows):         ipconfig /renew
+
+================================================================================

@@ -1,0 +1,580 @@
+--- Initial Configuration ---
+
+en
+conf t
+hostname S1
+banner motd "Authorized Personnel Only!"
+enable secret cisco
+service password-encryption
+line console 0
+password cisco
+login
+
+--- Telnet Configuration ---
+
+line vty 0 4
+password cisco
+login
+transport input telnet
+
+--- SSH Configuration ---
+
+conf t
+username admin secret <password>
+ip domain-name cisco.com
+crypto key generate rsa
+1024
+line vty 0 15
+login local
+transport input ssh
+end
+
+--- VLAN Configuration ---
+
+vlan 10
+name ACCOUNTING
+vlan 20
+name HR
+vlan 30
+name MARKETING
+vlan 99
+name MANAGEMENT
+
+int range fa0/1-4
+switchport mode access
+switchport access vlan 10
+
+int range fa0/5-8
+switchport mode access
+switchport access vlan 20
+
+int range fa0/9-12
+switchport mode access
+switchport access vlan 30
+
+int fa0/24
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+
+--- Port-Security ---
+|| NOTE: After switchport access vlan <> ||
+switchport port-security
+switchport port-security maximum 3
+switchport port-security violation shutdown
+switchport port-security mac-address sticky
+
+// Manual MAC-ADDRESS Configuration
+switchport port-security mac-address <mac-address>
+
+--- VLAN IP CONFIGURATION ---
+|| NOTE: JUST INCREMENT IP ADDRESSES FOR NEXT SWITCHES ||
+conf t
+int vlan 10
+ip add 200.130.107.2 255.255.255.128
+no shut
+end
+conf t
+int vlan 20
+ip add 200.131.231.129 255.255.255.128
+no shut
+end
+conf t
+int vlan 99
+ip add 200.131.232.2 255.255.255.128
+no shut
+end
+
+|| NOT NECESSARY IF ETHERCHANNEL IS USED ||
+//All Switch (TRUNK ALL)
+int range fa0/19-24
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allow vlan 1-1000
+int range g0/1-2
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allow vlan 1-1000
+|| ETHER CHANNEL HANDLES THIS ||
+
+--- Ether Channel Configuration ---
+int range fa0/16-17
+no shut
+channel-group 1 mode active
+int po 1
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+
+int range fa0/18-19
+no shut
+channel-group 2 mode desirable
+int po 2
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+
+int range fa0/19-20
+no shut
+channel-group 3 mode active/passive
+int po 3
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+
+-- Manual Configuration of EtherChannel --
+interface range fa0/20-21
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+channel-group 3 mode on
+
+--- Sub-Interface Configuration ---
+int g0/1
+no shut	
+int g0/0.10
+encapsulation dot1Q 10
+ip add 198.12.225.1 255.255.255.128
+no shut
+int g0/0.20
+encapsulation dot1Q 20
+ip add 198.12.226.1 255.255.255.128
+no shut
+int g0/0.30
+encapsulation dot1Q 30
+ip add 198.12.227.1 255.255.255.128
+no shut
+int g0/0.99
+encapsulation dot1Q 99
+ip add 198.12.228.1 255.255.255.128
+no shut
+
+--- DHCPv4 Configuration ---
+ip dhcp excluded-address 198.12.225.1 198.12.225.10
+ip dhcp excluded-address 198.12.226.1 198.12.226.10
+ip dhcp excluded-address 198.12.227.1 198.12.227.10
+ip dhcp excluded-address 198.12.228.1 198.12.228.10
+
+ip dhcp pool ACCOUNTING
+network 198.12.225.0 255.255.255.128
+default-router 198.12.225.1
+dns-server 11.11.11.5
+
+ip dhcp pool HR
+network 198.12.226.0 255.255.255.128
+default-router 198.12.226.1
+dns-server 11.11.11.5
+
+ip dhcp pool MARKETING
+network 198.12.227.0 255.255.255.128
+default-router 198.12.227.1
+dns-server 11.11.11.5
+
+ip dhcp pool MANAGEMENT
+network 198.12.228.0 255.255.255.128
+default-router 198.12.228.1
+dns-server 11.11.11.5
+
+// Display Bandwidth
+show int port-channel
+
+// Loopback IP Address Configuration
+int loopback 0
+ip address <ip address> <subnet mask>
+
+--- DHCPv6 Configuration ---
+
+config t
+ipv6 unicast-routing
+
+-- Configure in Each Sub Interface --
+
+-- SLAAC Only -- 
+int g0/0.10
+ipv6 add 2001:DB8:ACAD:10::/64
+no shut
+ipv6 enable
+int g0/0.20
+ipv6 add 2001:DB8:ACAD:20::/64
+no shut
+ipv6 enable
+
+
+-- SLAAC + DHCPv6 / Stateless DHCPv6 --
+int g0/1.20
+ipv6 add 2001:DB8:ACAD:20::1/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+
+-- Stateful DHCPv6 --
+ipv6 dhcp pool VLAN30
+address prefix 2001:DB8:ACAD:30::1/64
+dns-server 2001:4860:4860::8888
+domain-name www.dcism.com
+
+int g0/1.30
+ipv6 enable
+ipv6 address 2001:db8:acad:30::1/64
+ipv6 nd managed-config-flag
+no ipv6 nd other-config-flag
+ipv6 dhcp server VLAN30
+no shut
+end
+
+|| Port Security ||
+
+-- Select Ports to Secure ---
+int ra fa0/1-2, fa0/24
+
+--- Shutdown Unused Ports ---
+shutdown
+
+--- For accessing ---
+switchport mode access
+switchport port-security
+switchport port-security max 2
+
+--- Sticky Mac Addressing ---
+switchport port-security mac-address sticky
+
+--- Static Mac Addressing ---
+switchport port-security mac-address (mac address)
+
+switchport port-security violation r, s
+
+
+|| AAA Authentication Configuration ||
+
+-- Local AAA -- 
+username admin secret admin
+aaa new-model
+aaa authentication login default local
+line con 0
+login authentication default
+
+-- TACACS+ Configuration --
+conf t
+username admin2 secret admin2pa55
+tacacs-server host 192.168.2.2
+tacacs-server key tacacspa55
+aaa new-model
+aaa authentication login default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+line console 0
+login authentication default
+
+-- RADIUS Configuration --
+conf t
+username admin3 secret admin3pa55
+radius-server host 192.168.3.2
+radius-server key radiuspa55
+aaa new-model
+aaa authentication login default group radius local
+aaa accounting exec default start-stop group radius
+line console 0
+login authentication default
+
+-- Sub Interfaces & HSRP Configuration --
+//Active Router
+int g0/0
+ip add 10.28.0.2 255.255.255.248
+no shut
+int g0/1
+no shut	
+
+int g0/1.10
+encapsulation dot1Q 10
+ip helper-address 10.28.0.1
+ip add 12.17.2.130 255.255.255.192
+standby version 2
+standby 10 ip 12.17.2.129
+standby 10 priority 105
+standby 10 preempt
+standby 10 track g0/0
+no shut
+
+int g0/1.20
+encapsulation dot1Q 20
+ip helper-address 10.28.0.1
+ip add 12.17.3.194 255.255.255.192
+standby version 2
+standby 20 ip 12.17.3.193
+standby 20 priority 105
+standby 20 preempt
+standby 20 track g0/0
+no shut
+
+int g0/1.30
+encapsulation dot1Q 30
+ip helper-address 10.28.0.1
+ip add 12.17.5.2 255.255.255.192
+standby version 2
+standby 30 ip 12.17.5.1
+standby 30 priority 105
+standby 30 preempt
+standby 30 track g0/0
+no shut
+
+int g0/1.40
+encapsulation dot1Q 40
+ip helper-address 10.28.0.1
+ip add 12.17.6.66 255.255.255.192
+standby version 2
+standby 40 ip 12.17.6.65
+standby 40 priority 105
+standby 40 preempt
+standby 40 track g0/0
+no shut
+
+int g0/1.99
+encapsulation dot1Q 99 native
+ip helper-address 10.28.0.1
+ip add 12.17.7.130 255.255.255.192
+standby version 2
+standby 99 ip 12.17.7.129
+standby 99 priority 105
+standby 99 preempt
+standby 99 track g0/0
+no shut
+
+//Backup Router
+int g0/1
+ip add 10.29.0.2 255.255.255.248
+no shut	
+int g0/2
+no shut	
+
+int g0/2.10
+encapsulation dot1Q 10
+ip helper-address 10.29.0.1
+ip add 12.17.2.131 255.255.255.192
+standby version 2
+standby 10 ip 12.17.2.129
+standby 10 priority 100
+standby 10 preempt
+no shut
+
+int g0/2.20
+encapsulation dot1Q 20
+ip helper-address 10.29.0.1
+ip add 12.17.3.195 255.255.255.192
+standby version 2
+standby 20 ip 12.17.3.193
+standby 20 priority 100
+standby 20 preempt
+no shut
+
+int g0/2.30
+encapsulation dot1Q 30
+ip helper-address 10.29.0.1
+ip add 12.17.5.3 255.255.255.192
+standby version 2
+standby 30 ip 12.17.5.1
+standby 30 priority 100
+standby 30 preempt
+no shut
+
+int g0/2.40
+encapsulation dot1Q 40
+ip helper-address 10.29.0.1
+ip add 12.17.6.67 255.255.255.192
+standby version 2
+standby 40 ip 12.17.6.65
+standby 40 priority 100
+standby 40 preempt
+no shut
+
+int g0/2.99
+encapsulation dot1Q 99 native
+ip helper-address 10.29.0.1 
+ip add 12.17.7.131 255.255.255.192
+standby version 2
+standby 99 ip 12.17.7.129
+standby 99 priority 100
+standby 99 preempt
+no shut
+
+//MAIN_ROUTER
+int g0/0
+ip add 10.28.0.1 255.255.255.248
+no shut
+int g0/1
+ip add 10.29.0.1 255.255.255.248
+no shut
+int g0/2
+ip add 28.17.0.1 255.255.255.248
+no shut
+
+-- IPv6 Configuration --
+conf t
+ipv6 unicast-routing
+-- SLAAC + DHCPv6 / Stateless DHCPv6 --
+ipv6 dhcp pool ACCOUNTING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+ipv6 dhcp pool MARKETING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+ipv6 dhcp pool SALES
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+ipv6 dhcp pool HR
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+ipv6 dhcp pool MANAGEMENT
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+
+
+//Active Router
+int g0/1.10
+ipv6 add 2001:DB8:ACAD:10::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server ACCOUNTING
+
+
+int g0/1.20
+ipv6 add 2001:DB8:ACAD:20::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MARKETING
+
+
+int g0/1.30
+ipv6 add 2001:DB8:ACAD:30::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server SALES
+
+
+int g0/1.40
+ipv6 add 2001:DB8:ACAD:40::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server HR
+
+
+int g0/1.99
+ipv6 add 2001:DB8:ACAD:99::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MANAGEMENT
+
+
+
+//Backup Router
+int g0/2.10
+ipv6 add 2001:DB8:ACAD:10::3/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server ACCOUNTING
+
+
+int g0/2.20
+ipv6 add 2001:DB8:ACAD:20::3/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MARKETING
+
+
+int g0/2.30
+ipv6 add 2001:DB8:ACAD:30::3/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server SALES
+
+
+int g0/2.40
+ipv6 add 2001:DB8:ACAD:40::3/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server HR
+
+
+int g0/2.99
+ipv6 add 2001:DB8:ACAD:99::3/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MANAGEMENT
+
+|| Routing Protocols ||
+
+--- RIPv2 IPv4 ---
+router rip
+ version 2
+ no auto-summary
+ network 10.0.0.0
+ network 192.168.1.0
+
+--- RIPng (RIPv6) ---
+ipv6 unicast-routing
+
+interface GigabitEthernet0/0
+ ipv6 rip MY-RIP enable
+
+interface GigabitEthernet0/1
+ ipv6 rip MY-RIP enable
+
+ipv6 router rip MY-RIP
+
+--- EIGRP (IPv4) ---
+router eigrp 100
+ network 10.10.10.0 0.0.0.255
+ no auto-summary
+
+--- OSPF ---
+router ospf 10
+ router-id 1.1.1.1
+ network 10.10.10.0 0.0.0.255 area 0
+ network 192.168.1.0 0.0.0.255 area 1
+ no auto-summary
+
+--- Static Route ---
+ip route 10.10.20.0 255.255.255.0 192.168.1.2
+
+--- Backup Floating Static Route ---
+ip route 10.10.20.0 255.255.255.0 192.168.2.2 200
+
+--- Default Static Route ---
+ip route 0.0.0.0 0.0.0.0 192.168.1.1
+
+|| Redistribution ||
+
+--- RIPv2 ---
+router rip
+ version 2
+ redistribute static
+ redistribute ospf 10 metric 2
+ redistribute eigrp 100 metric 2
+
+--- EIGRP ---
+router eigrp 100
+ redistribute static
+ redistribute ospf 10 metric 100000 100 255 1 1500
+ redistribute rip metric 100000 100 255 1 1500
+
+--- OSPF ---
+router ospf 10
+ redistribute static subnets
+ redistribute eigrp subnets
+ redistribute rip subnets
+
+--- RIPng ---
+ipv6 router rip MY-RIP
+ redistribute static
+ redistribute ospf 10
+ redistribute eigrp 100
+
+

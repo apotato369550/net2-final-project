@@ -1,0 +1,313 @@
+================================================================================
+                    ROUTING CONFIGURATION
+================================================================================
+
+TYPES:
+  - Static Routes: Manually configured, never change
+  - Dynamic Routing: Protocols automatically learn and share routes
+
+DYNAMIC ROUTING PROTOCOLS:
+  - RIPv2: Distance vector, hop count metric, max 15 hops, simple
+  - RIPng: RIPv2 for IPv6
+  - EIGRP: Advanced distance vector, Cisco proprietary, fast convergence
+  - OSPF: Link-state, scalable, industry standard, complex
+
+WHEN TO USE:
+  - RIP: Small networks, simple topology
+  - EIGRP: All-Cisco networks, fast convergence needed
+  - OSPF: Large enterprise, multi-vendor, hierarchical design
+  - Static: Backup routes, stub networks, default routes
+
+
+================================================================================
+                    1. RIPv2 (IPv4)
+================================================================================
+
+WHY: Simplest dynamic routing protocol. Good for small networks with fewer
+     than 15 hops. Easy to configure and troubleshoot.
+
+conf t
+router rip
+version 2
+no auto-summary
+network 10.0.0.0
+network 192.168.1.0
+end
+
+================================================================================
+                    2. RIPng (RIP NEXT GENERATION - IPv6)
+================================================================================
+
+WHY: RIP for IPv6 networks. Configured per-interface instead of using network
+     statements. Simpler than RIPv2 interface configuration.
+
+CONCEPT (from the-text.txt):
+  - Enable IPv6 routing
+  - Create RIPng process with a name
+  - Enable RIPng on each interface
+  - No network statements needed (enabled per-interface)
+
+conf t
+ipv6 unicast-routing
+
+interface GigabitEthernet0/0
+ipv6 rip MY-RIP enable
+exit
+
+interface GigabitEthernet0/1
+ipv6 rip MY-RIP enable
+exit
+
+ipv6 router rip MY-RIP
+end
+
+================================================================================
+                    3. EIGRP (ENHANCED INTERIOR GATEWAY ROUTING PROTOCOL)
+================================================================================
+
+WHY: Cisco's advanced routing protocol. Fast convergence, supports VLSM,
+     minimal bandwidth usage, hybrid protocol (best of distance vector + link state).
+
+CONCEPT (from the-text.txt):
+  - Enable EIGRP with Autonomous System (AS) number
+  - Advertise networks with wildcard mask
+  - Disable auto-summary for VLSM support
+  - All routers in same AS must use same AS number
+
+--- EDITABLE TEMPLATE ---
+
+conf t
+router eigrp <AS_NUMBER>
+network <NETWORK_ADDRESS_1> <WILDCARD_MASK_1>
+network <NETWORK_ADDRESS_2> <WILDCARD_MASK_2>
+no auto-summary
+end
+
+EDITABLE PARAMETERS:
+  <AS_NUMBER>          → Autonomous System number (1-65535, must match neighbors)
+  <NETWORK_ADDRESS_X>  → Network to advertise (e.g., 10.10.10.0)
+  <WILDCARD_MASK_X>    → Wildcard mask (inverse of subnet mask, e.g., 0.0.0.255)
+
+WILDCARD MASK REFERENCE:
+  /24 (255.255.255.0)   → Wildcard 0.0.0.255
+  /16 (255.255.0.0)     → Wildcard 0.0.255.255
+  /8 (255.0.0.0)        → Wildcard 0.255.255.255
+
+--- EXAMPLE (READY TO COPY) ---
+
+conf t
+router eigrp 100
+network 10.10.10.0 0.0.0.255
+network 192.168.1.0 0.0.0.255
+no auto-summary
+end
+
+
+================================================================================
+                    4. OSPF (OPEN SHORTEST PATH FIRST)
+================================================================================
+
+WHY: Industry standard link-state protocol. Scales to large networks, fast
+     convergence, supports hierarchical design with areas.
+
+CONCEPT (from the-text.txt):
+  - Enable OSPF with process ID (locally significant)
+  - Set router ID (identifies router in OSPF domain)
+  - Advertise networks with wildcard mask and area assignment
+  - Disable auto-summary
+
+--- EDITABLE TEMPLATE ---
+
+conf t
+router ospf <PROCESS_ID>
+router-id <ROUTER_ID>
+network <NETWORK_ADDRESS_1> <WILDCARD_MASK_1> area <AREA_ID_1>
+network <NETWORK_ADDRESS_2> <WILDCARD_MASK_2> area <AREA_ID_2>
+no auto-summary
+end
+
+EDITABLE PARAMETERS:
+  <PROCESS_ID>         → OSPF process ID (1-65535, locally significant)
+  <ROUTER_ID>          → Unique ID in dotted decimal (e.g., 1.1.1.1, 10.0.0.1)
+  <NETWORK_ADDRESS_X>  → Network to advertise (e.g., 10.10.10.0)
+  <WILDCARD_MASK_X>    → Wildcard mask (e.g., 0.0.0.255)
+  <AREA_ID_X>          → OSPF area (0 = backbone, others for hierarchy)
+
+--- EXAMPLE (READY TO COPY) ---
+
+conf t
+router ospf 10
+router-id 1.1.1.1
+network 10.10.10.0 0.0.0.255 area 0
+network 192.168.1.0 0.0.0.255 area 1
+no auto-summary
+end
+
+
+================================================================================
+                    5. STATIC ROUTES
+================================================================================
+
+WHY: Manually configured routes that never change. Used for:
+     - Stub networks (only one way in/out)
+     - Backup routes (floating static)
+     - Default routes (gateway of last resort)
+
+CONCEPT (from the-text.txt):
+  - Define destination network, subnet mask, and next-hop or exit interface
+  - Static routes have administrative distance of 1 (very trusted)
+
+conf t
+ip route 10.10.20.0 255.255.255.0 192.168.1.2
+end
+
+
+================================================================================
+                    6. FLOATING STATIC ROUTE (BACKUP ROUTE)
+================================================================================
+
+WHY: Provides redundancy. Only used if primary route fails. Higher administrative
+     distance makes it less preferred than dynamic routes.
+
+CONCEPT (from the-text.txt):
+  - Same as static route, but add administrative distance parameter
+  - Default AD: Connected=0, Static=1, EIGRP=90, OSPF=110, RIP=120
+  - Set backup route AD higher than primary (typically 200+)
+
+
+conf t
+ip route 10.10.20.0 255.255.255.0 192.168.2.2 200
+end
+
+
+================================================================================
+                    7. DEFAULT STATIC ROUTE (GATEWAY OF LAST RESORT)
+================================================================================
+
+WHY: Sends all unknown traffic to a default gateway. Essential for internet
+     connectivity. Uses 0.0.0.0/0 to match ANY destination.
+
+CONCEPT (from the-text.txt):
+  - Destination 0.0.0.0 with mask 0.0.0.0 = matches everything
+  - Typically points to ISP or core router
+  - Route of last resort when no specific match exists
+
+conf t
+ip route 0.0.0.0 0.0.0.0 192.168.1.1
+end
+
+
+================================================================================
+                    8. ROUTE REDISTRIBUTION
+================================================================================
+
+WHY: Allows different routing protocols to share routes. Required when network
+     uses multiple protocols (e.g., RIP at branch, OSPF at core).
+
+CAUTION: Redistribution can cause routing loops. Use carefully with filtering.
+
+
+--- REDISTRIBUTING INTO RIPv2 ---
+
+conf t
+router rip
+version 2
+redistribute static
+redistribute ospf <OSPF_PROCESS_ID> metric <HOP_COUNT>
+redistribute eigrp <EIGRP_AS> metric <HOP_COUNT>
+end
+
+EDITABLE PARAMETERS:
+  <OSPF_PROCESS_ID>    → OSPF process ID (e.g., 10)
+  <EIGRP_AS>           → EIGRP AS number (e.g., 100)
+  <HOP_COUNT>          → RIP metric in hops (1-15, typically 2-5)
+
+--- EXAMPLE (READY TO COPY) ---
+
+conf t
+router rip
+version 2
+redistribute static
+redistribute ospf 10 metric 2
+redistribute eigrp 100 metric 2
+end
+
+
+--- REDISTRIBUTING INTO EIGRP ---
+
+conf t
+router eigrp <AS_NUMBER>
+redistribute static
+redistribute ospf <OSPF_PROCESS_ID> metric <BW> <DELAY> <RELIABILITY> <LOAD> <MTU>
+redistribute rip metric <BW> <DELAY> <RELIABILITY> <LOAD> <MTU>
+end
+
+EDITABLE PARAMETERS:
+  <AS_NUMBER>          → EIGRP AS number (e.g., 100)
+  <OSPF_PROCESS_ID>    → OSPF process ID (e.g., 10)
+  <BW>                 → Bandwidth in Kbps (e.g., 100000 = 100Mbps)
+  <DELAY>              → Delay in microseconds (e.g., 100)
+  <RELIABILITY>        → Reliability 0-255 (255 = 100%, typically 255)
+  <LOAD>               → Load 0-255 (1 = minimal load, typically 1)
+  <MTU>                → Max transmission unit in bytes (typically 1500)
+
+--- EXAMPLE (READY TO COPY) ---
+
+conf t
+router eigrp 100
+redistribute static
+redistribute ospf 10 metric 100000 100 255 1 1500
+redistribute rip metric 100000 100 255 1 1500
+end
+
+
+--- REDISTRIBUTING INTO OSPF ---
+
+conf t
+router ospf <PROCESS_ID>
+redistribute static subnets
+redistribute eigrp <EIGRP_AS> subnets
+redistribute rip subnets
+end
+
+EDITABLE PARAMETERS:
+  <PROCESS_ID>         → OSPF process ID (e.g., 10)
+  <EIGRP_AS>           → EIGRP AS number (e.g., 100)
+
+NOTE: "subnets" keyword is REQUIRED to redistribute subnets (not just classful)
+
+--- EXAMPLE (READY TO COPY) ---
+
+conf t
+router ospf 10
+redistribute static subnets
+redistribute eigrp 100 subnets
+redistribute rip subnets
+end
+
+
+================================================================================
+                    QUICK REFERENCE COMMANDS
+================================================================================
+
+ROUTING TABLE & PROTOCOLS:
+View routing table:                   show ip route
+View specific protocol routes:        show ip route rip | eigrp | ospf | static
+View routing protocols:               show ip protocols
+View OSPF neighbors:                  show ip ospf neighbor
+View EIGRP neighbors:                 show ip eigrp neighbors
+View OSPF database:                   show ip ospf database
+View EIGRP topology:                  show ip eigrp topology
+
+IPv6 ROUTING:
+View IPv6 routing table:              show ipv6 route
+View RIPng status:                    show ipv6 rip
+View IPv6 protocols:                  show ipv6 protocols
+
+TROUBLESHOOTING:
+Debug RIP:                            debug ip rip
+Debug EIGRP:                          debug eigrp packets
+Debug OSPF:                           debug ip ospf events
+Clear routing table:                  clear ip route *
+
+================================================================================

@@ -1,0 +1,644 @@
+================================================================================
+        KAMOTE KORPORATION - IP ADDRESSING & VLAN ASSIGNMENT SCHEME
+================================================================================
+
+PROJECT: Multi-Branch Delivery Network Infrastructure
+DESIGN PHILOSOPHY: Easy to understand, scalable, protocol-optimized
+PROTOCOLS: OSPF (Main Branch), EIGRP (Branches + ISPs)
+
+================================================================================
+                            SUMMARY OVERVIEW
+================================================================================
+
+SITE                    BASE NETWORK        PROTOCOL    VLAN COUNT
+--------------------------------------------------------------------------------
+Main Branch (HQ)        192.168.0.0/16      OSPF        10 VLANs
+Branch 1 (Mandaue)      100.100.0.0/16      EIGRP       5 VLANs
+Branch 2 (Lapu-Lapu)    200.200.0.0/16      EIGRP       5 VLANs
+PLDT ISP Network        10.10.0.0/16        EIGRP       3 P2P Links
+Globe ISP Network       20.20.0.0/16        EIGRP       3 P2P Links
+
+================================================================================
+                    MAIN BRANCH (HQ) - CEBU CITY, BANILAD
+================================================================================
+
+BASE NETWORK: 192.168.0.0/16
+ROUTING PROTOCOL: OSPF (Area 0)
+TOTAL VLANS: 10 (8 Department + 1 Management + 1 Voice)
+
+--------------------------------------------------------------------------------
+                        DEPARTMENT DATA VLANs
+--------------------------------------------------------------------------------
+
+VLAN 10 - Reception/Customer Service
+  Subnet:        192.168.10.0/24
+  Usable IPs:    192.168.10.1 - 192.168.10.254 (254 hosts)
+  Gateway:       192.168.10.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.10.10 - 192.168.10.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Front desk operations, customer inquiries
+
+VLAN 20 - Administration
+  Subnet:        192.168.20.0/24
+  Usable IPs:    192.168.20.1 - 192.168.20.254 (254 hosts)
+  Gateway:       192.168.20.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.20.10 - 192.168.20.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Executive and administrative staff
+
+VLAN 30 - Dispatch Coordination
+  Subnet:        192.168.30.0/24
+  Usable IPs:    192.168.30.1 - 192.168.30.254 (254 hosts)
+  Gateway:       192.168.30.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.30.10 - 192.168.30.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Delivery scheduling and fleet coordination
+
+VLAN 40 - Inventory Management
+  Subnet:        192.168.40.0/24
+  Usable IPs:    192.168.40.1 - 192.168.40.254 (254 hosts)
+  Gateway:       192.168.40.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.40.10 - 192.168.40.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Stock management and warehouse operations
+
+VLAN 50 - IT/Network Operations
+  Subnet:        192.168.50.0/24
+  Usable IPs:    192.168.50.1 - 192.168.50.254 (254 hosts)
+  Gateway:       192.168.50.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.50.10 - 192.168.50.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Network administration and technical support
+
+VLAN 60 - Accounting/Finance
+  Subnet:        192.168.60.0/24
+  Usable IPs:    192.168.60.1 - 192.168.60.254 (254 hosts)
+  Gateway:       192.168.60.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.60.10 - 192.168.60.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Financial operations and payroll
+
+VLAN 70 - Quality Control
+  Subnet:        192.168.70.0/24
+  Usable IPs:    192.168.70.1 - 192.168.70.254 (254 hosts)
+  Gateway:       192.168.70.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.70.10 - 192.168.70.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Service quality monitoring and assurance
+
+VLAN 80 - Driver/Field Staff Support
+  Subnet:        192.168.80.0/24
+  Usable IPs:    192.168.80.1 - 192.168.80.254 (254 hosts)
+  Gateway:       192.168.80.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.80.10 - 192.168.80.250
+  Devices:       5 PCs, 2 IP Phones (data traffic only)
+  Description:   Driver management and field operations
+
+--------------------------------------------------------------------------------
+                        MANAGEMENT & VOICE VLANs
+--------------------------------------------------------------------------------
+
+VLAN 99 - Management/Administrative Network
+  Subnet:        192.168.99.0/24
+  Usable IPs:    192.168.99.1 - 192.168.99.254 (254 hosts)
+  Gateway:       192.168.99.1
+  Static IPs:    192.168.99.10 - 192.168.99.100 (Network devices)
+  Description:   Network device management (switches, routers, MLS)
+
+  Device Assignment Examples:
+    Core MLS-1:      192.168.99.10
+    Core MLS-2:      192.168.99.11
+    Access Switch 1: 192.168.99.21
+    Access Switch 2: 192.168.99.22
+    Access Switch 3: 192.168.99.23
+    Access Switch 4: 192.168.99.24
+    Access Switch 5: 192.168.99.25
+    Access Switch 6: 192.168.99.26
+    Access Switch 7: 192.168.99.27
+    Router 1 (PLDT): 192.168.99.2
+    Router 2 (Globe): 192.168.99.3
+
+VLAN 150 - Voice VLAN (IP Telephony)
+  Subnet:        192.168.150.0/23
+  Usable IPs:    192.168.150.1 - 192.168.151.254 (510 hosts)
+  Gateway:       192.168.150.1 (HSRP Virtual IP)
+  DHCP Pool:     192.168.150.10 - 192.168.151.250
+  Devices:       16 IP Phones (2 per office × 8 offices)
+  QoS Priority:  Voice traffic (CoS 5, DSCP EF)
+  Description:   Dedicated voice VLAN for all IP phones
+
+--------------------------------------------------------------------------------
+                        SERVER SERVICES SUBNET
+--------------------------------------------------------------------------------
+
+VLAN 200 - Server Farm
+  Subnet:        192.168.200.0/24
+  Usable IPs:    192.168.200.1 - 192.168.200.254
+  Gateway:       192.168.200.1
+  Static IPs:    192.168.200.10 - 192.168.200.50
+
+  Server Assignments:
+    Web Server (HTTP):      192.168.200.10
+    Email Server (SMTP):    192.168.200.11
+    FTP Server:             192.168.200.12
+    DNS Server:             192.168.200.13
+    DHCP Server:            192.168.200.14
+    Intranet Server:        192.168.200.15
+    Call Manager/VoIP:      192.168.200.20
+    Backup Server:          192.168.200.30
+
+================================================================================
+                    BRANCH 1 - MANDAUE CITY, TALAMBAN
+================================================================================
+
+BASE NETWORK: 100.100.0.0/16
+ROUTING PROTOCOL: EIGRP (AS 100)
+TOTAL VLANS: 5 (3 Department + 1 Management + 1 Voice)
+ISP CONNECTION: PLDT
+
+--------------------------------------------------------------------------------
+                        DEPARTMENT DATA VLANs
+--------------------------------------------------------------------------------
+
+VLAN 10 - Reception
+  Subnet:        100.100.10.0/24
+  Usable IPs:    100.100.10.1 - 100.100.10.254 (254 hosts)
+  Gateway:       100.100.10.1
+  DHCP Pool:     100.100.10.10 - 100.100.10.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Front desk and customer service
+
+VLAN 30 - Dispatch Coordination
+  Subnet:        100.100.30.0/24
+  Usable IPs:    100.100.30.1 - 100.100.30.254 (254 hosts)
+  Gateway:       100.100.30.1
+  DHCP Pool:     100.100.30.10 - 100.100.30.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional dispatch operations
+
+VLAN 40 - Inventory Management
+  Subnet:        100.100.40.0/24
+  Usable IPs:    100.100.40.1 - 100.100.40.254 (254 hosts)
+  Gateway:       100.100.40.1
+  DHCP Pool:     100.100.40.10 - 100.100.40.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional warehouse operations
+
+VLAN 70 - Quality Control
+  Subnet:        100.100.70.0/24
+  Usable IPs:    100.100.70.1 - 100.100.70.254 (254 hosts)
+  Gateway:       100.100.70.1
+  DHCP Pool:     100.100.70.10 - 100.100.70.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional quality assurance
+
+--------------------------------------------------------------------------------
+                        MANAGEMENT & VOICE VLANs
+--------------------------------------------------------------------------------
+
+VLAN 99 - Management/Administrative Network
+  Subnet:        100.100.99.0/24
+  Usable IPs:    100.100.99.1 - 100.100.99.254
+  Gateway:       100.100.99.1
+  Static IPs:    100.100.99.10 - 100.100.99.50
+
+  Device Assignment Examples:
+    Router 1:     100.100.99.2
+    Switch 1:     100.100.99.11
+    Switch 2:     100.100.99.12
+
+VLAN 150 - Voice VLAN (IP Telephony)
+  Subnet:        100.100.150.0/24
+  Usable IPs:    100.100.150.1 - 100.100.150.254 (254 hosts)
+  Gateway:       100.100.150.1
+  DHCP Pool:     100.100.150.10 - 100.100.150.250
+  Devices:       4 IP Phones (1 per office)
+  QoS Priority:  Voice traffic (CoS 5, DSCP EF)
+
+================================================================================
+                    BRANCH 2 - LAPU-LAPU CITY, BASAK
+================================================================================
+
+BASE NETWORK: 200.200.0.0/16
+ROUTING PROTOCOL: EIGRP (AS 100)
+TOTAL VLANS: 5 (3 Department + 1 Management + 1 Voice)
+ISP CONNECTION: Globe
+
+--------------------------------------------------------------------------------
+                        DEPARTMENT DATA VLANs
+--------------------------------------------------------------------------------
+
+VLAN 10 - Reception
+  Subnet:        200.200.10.0/24
+  Usable IPs:    200.200.10.1 - 200.200.10.254 (254 hosts)
+  Gateway:       200.200.10.1
+  DHCP Pool:     200.200.10.10 - 200.200.10.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Front desk and customer service
+
+VLAN 30 - Dispatch Coordination
+  Subnet:        200.200.30.0/24
+  Usable IPs:    200.200.30.1 - 200.200.30.254 (254 hosts)
+  Gateway:       200.200.30.1
+  DHCP Pool:     200.200.30.10 - 200.200.30.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional dispatch operations
+
+VLAN 40 - Inventory Management
+  Subnet:        200.200.40.0/24
+  Usable IPs:    200.200.40.1 - 200.200.40.254 (254 hosts)
+  Gateway:       200.200.40.1
+  DHCP Pool:     200.200.40.10 - 200.200.40.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional warehouse operations
+
+VLAN 70 - Quality Control
+  Subnet:        200.200.70.0/24
+  Usable IPs:    200.200.70.1 - 200.200.70.254 (254 hosts)
+  Gateway:       200.200.70.1
+  DHCP Pool:     200.200.70.10 - 200.200.70.250
+  Devices:       2 PCs, 1 IP Phone (data traffic only)
+  Description:   Regional quality assurance
+
+--------------------------------------------------------------------------------
+                        MANAGEMENT & VOICE VLANs
+--------------------------------------------------------------------------------
+
+VLAN 99 - Management/Administrative Network
+  Subnet:        200.200.99.0/24
+  Usable IPs:    200.200.99.1 - 200.200.99.254
+  Gateway:       200.200.99.1
+  Static IPs:    200.200.99.10 - 200.200.99.50
+
+  Device Assignment Examples:
+    Router 1:     200.200.99.2
+    Switch 1:     200.200.99.11
+    Switch 2:     200.200.99.12
+
+VLAN 150 - Voice VLAN (IP Telephony)
+  Subnet:        200.200.150.0/24
+  Usable IPs:    200.200.150.1 - 200.200.150.254 (254 hosts)
+  Gateway:       200.200.150.1
+  DHCP Pool:     200.200.150.10 - 200.200.150.250
+  Devices:       4 IP Phones (1 per office)
+  QoS Priority:  Voice traffic (CoS 5, DSCP EF)
+
+================================================================================
+                        PLDT ISP NETWORK TOPOLOGY
+================================================================================
+
+BASE NETWORK: 10.10.0.0/16
+ROUTING PROTOCOL: EIGRP (AS 1000)
+CONNECTIONS: Router-to-Router Point-to-Point Links
+
+--------------------------------------------------------------------------------
+                        POINT-TO-POINT LINKS
+--------------------------------------------------------------------------------
+
+Link 1: PLDT Router 1 ←→ PLDT Router 2 (ISP Internal Backbone)
+  Subnet:        10.10.1.0/30
+  Usable IPs:    10.10.1.1 - 10.10.1.2 (2 hosts)
+  PLDT-R1:       10.10.1.1 (Interface GigabitEthernet 0/0/0)
+  PLDT-R2:       10.10.1.2 (Interface GigabitEthernet 0/0/0)
+  Description:   ISP internal backbone link
+
+Link 2: PLDT Router 1 ←→ Main Branch Router 1 (WAN Link to HQ)
+  Subnet:        10.10.2.0/30
+  Usable IPs:    10.10.2.1 - 10.10.2.2 (2 hosts)
+  PLDT-R1:       10.10.2.1 (Interface GigabitEthernet 0/0/1)
+  Main-R1:       10.10.2.2 (Interface GigabitEthernet 0/1)
+  Description:   WAN link to Main HQ (Primary ISP for HQ)
+
+Link 3: PLDT Router 2 ←→ Branch 2 Router 1 (WAN Link to Lapu-Lapu)
+  Subnet:        10.10.3.0/30
+  Usable IPs:    10.10.3.1 - 10.10.3.2 (2 hosts)
+  PLDT-R2:       10.10.3.1 (Interface GigabitEthernet 0/0/1)
+  Branch2-R1:    10.10.3.2 (Interface GigabitEthernet 0/1)
+  Description:   WAN link to Branch 2 (Lapu-Lapu)
+
+--------------------------------------------------------------------------------
+                        MULTIUSER SETUP
+--------------------------------------------------------------------------------
+
+MultiUser 1 (Connected to PLDT-R1):
+  IP Address:    10.10.10.10/24
+  Gateway:       10.10.10.1
+  Subnet:        10.10.10.0/24
+  Description:   ISP customer service/management access
+
+MultiUser 2 (Connected to PLDT-R2):
+  IP Address:    10.10.20.10/24
+  Gateway:       10.10.20.1
+  Subnet:        10.10.20.0/24
+  Description:   ISP customer service/management access
+
+================================================================================
+                        GLOBE ISP NETWORK TOPOLOGY
+================================================================================
+
+BASE NETWORK: 20.20.0.0/16
+ROUTING PROTOCOL: EIGRP (AS 2000)
+CONNECTIONS: Router-to-Router Point-to-Point Links
+
+--------------------------------------------------------------------------------
+                        POINT-TO-POINT LINKS
+--------------------------------------------------------------------------------
+
+Link 1: Globe Router 1 ←→ Globe Router 2 (ISP Internal Backbone)
+  Subnet:        20.20.1.0/30
+  Usable IPs:    20.20.1.1 - 20.20.1.2 (2 hosts)
+  Globe-R1:      20.20.1.1 (Interface GigabitEthernet 0/0/0)
+  Globe-R2:      20.20.1.2 (Interface GigabitEthernet 0/0/0)
+  Description:   ISP internal backbone link
+
+Link 2: Globe Router 1 ←→ Main Branch Router 2 (WAN Link to HQ)
+  Subnet:        20.20.2.0/30
+  Usable IPs:    20.20.2.1 - 20.20.2.2 (2 hosts)
+  Globe-R1:      20.20.2.1 (Interface GigabitEthernet 0/0/1)
+  Main-R2:       20.20.2.2 (Interface GigabitEthernet 0/1)
+  Description:   WAN link to Main HQ (Secondary ISP for HQ)
+
+Link 3: Globe Router 2 ←→ Branch 1 Router 1 (WAN Link to Mandaue)
+  Subnet:        20.20.3.0/30
+  Usable IPs:    20.20.3.1 - 20.20.3.2 (2 hosts)
+  Globe-R2:      20.20.3.1 (Interface GigabitEthernet 0/0/1)
+  Branch1-R1:    20.20.3.2 (Interface GigabitEthernet 0/1)
+  Description:   WAN link to Branch 1 (Mandaue)
+
+--------------------------------------------------------------------------------
+                        MULTIUSER SETUP
+--------------------------------------------------------------------------------
+
+MultiUser 1 (Connected to Globe-R1):
+  IP Address:    20.20.10.10/24
+  Gateway:       20.20.10.1
+  Subnet:        20.20.10.0/24
+  Description:   ISP customer service/management access
+
+MultiUser 2 (Connected to Globe-R2):
+  IP Address:    20.20.20.10/24
+  Gateway:       20.20.20.1
+  Subnet:        20.20.20.0/24
+  Description:   ISP customer service/management access
+
+================================================================================
+                        ROUTING PROTOCOL DESIGN
+================================================================================
+
+--------------------------------------------------------------------------------
+                        OSPF CONFIGURATION (Main Branch Only)
+--------------------------------------------------------------------------------
+
+PROTOCOL: OSPF (Open Shortest Path First)
+PROCESS ID: 1
+AREA: Area 0 (Backbone Area)
+ROUTER ID: Based on highest loopback or interface IP
+
+Networks to Advertise in OSPF:
+  - 192.168.10.0/24 (VLAN 10 - Reception)
+  - 192.168.20.0/24 (VLAN 20 - Administration)
+  - 192.168.30.0/24 (VLAN 30 - Dispatch)
+  - 192.168.40.0/24 (VLAN 40 - Inventory)
+  - 192.168.50.0/24 (VLAN 50 - IT)
+  - 192.168.60.0/24 (VLAN 60 - Accounting)
+  - 192.168.70.0/24 (VLAN 70 - Quality Control)
+  - 192.168.80.0/24 (VLAN 80 - Driver Support)
+  - 192.168.99.0/24 (VLAN 99 - Management)
+  - 192.168.150.0/23 (VLAN 150 - Voice)
+  - 192.168.200.0/24 (Server Farm)
+
+OSPF Features:
+  - Fast convergence within main branch
+  - Hierarchical design (single area for simplicity)
+  - Equal-cost load balancing between redundant paths
+  - Supports VLSM (already implemented)
+
+--------------------------------------------------------------------------------
+                        EIGRP CONFIGURATION
+--------------------------------------------------------------------------------
+
+PROTOCOL: EIGRP (Enhanced Interior Gateway Routing Protocol)
+AUTONOMOUS SYSTEMS:
+  - AS 100: Kamote Korporation (Branch 1, Branch 2, Inter-branch routing)
+  - AS 1000: PLDT ISP Network
+  - AS 2000: Globe ISP Network
+
+EIGRP AS 100 (Kamote Korporation):
+  Networks to Advertise:
+    Branch 1:
+      - 100.100.0.0/16 (summary route)
+    Branch 2:
+      - 200.200.0.0/16 (summary route)
+
+EIGRP Features:
+  - Fast convergence for inter-branch communication
+  - Supports unequal-cost load balancing
+  - Automatic route summarization (can be disabled for granular control)
+  - Reliable Transport Protocol (RTP) for updates
+
+--------------------------------------------------------------------------------
+                    ROUTE REDISTRIBUTION STRATEGY
+--------------------------------------------------------------------------------
+
+Main Branch Routers (R1 and R2):
+  - Redistribute OSPF into EIGRP (for inter-branch routing)
+  - Redistribute EIGRP into OSPF (for returning traffic)
+  - Use route-maps and metrics to control redistribution
+  - Set administrative distance to prefer OSPF internally
+
+Redistribution Points:
+  1. Main-R1: OSPF ←→ EIGRP (AS 100) + EIGRP (AS 1000 - PLDT)
+  2. Main-R2: OSPF ←→ EIGRP (AS 100) + EIGRP (AS 2000 - Globe)
+
+Default Route Propagation:
+  - PLDT and Globe ISPs provide default route (0.0.0.0/0)
+  - Main branch routers advertise default route into OSPF
+  - Branches learn default route via EIGRP
+
+================================================================================
+                        SCALABILITY CONSIDERATIONS
+================================================================================
+
+1. IP ADDRESS SPACE GROWTH
+   - Each site uses /16 network, allowing 65,534 hosts per location
+   - Current utilization: <1% (ample room for expansion)
+   - Can add new VLANs using unused /24 subnets within each /16
+
+2. VLAN NUMBERING SCHEME
+   - Consistent VLAN IDs across sites (VLAN 10 = Reception everywhere)
+   - Makes configuration templating easier
+   - VLANs 1-80: Department data VLANs (10-increments)
+   - VLAN 99: Management (standard)
+   - VLAN 150: Voice (standard)
+   - VLAN 200+: Server/infrastructure VLANs
+
+3. ROUTING PROTOCOL SCALABILITY
+   - OSPF in main branch: Can handle hundreds of routers in Area 0
+   - EIGRP for WAN: Efficient for hub-and-spoke or partial mesh
+   - ISP networks isolated in separate autonomous systems
+
+4. VOICE VLAN DESIGN
+   - Main Branch: /23 subnet (510 IPs) supports up to 500 phones
+   - Branches: /24 subnet (254 IPs) supports up to 250 phones each
+   - Current usage: <5% (scalable for significant growth)
+
+5. ADDING NEW BRANCHES
+   - Use next available private range (e.g., 150.150.0.0/16 for Branch 3)
+   - Maintain same VLAN structure (10, 20, 30, 99, 150)
+   - Connect via EIGRP AS 100
+   - Predictable, repeatable deployment pattern
+
+6. SUMMARIZATION OPPORTUNITIES
+   - Main Branch: 192.168.0.0/16 (single summary to ISPs)
+   - Branch 1: 100.100.0.0/16 (single summary)
+   - Branch 2: 200.200.0.0/16 (single summary)
+   - Reduces routing table size across WAN
+
+================================================================================
+                        DESIGN RATIONALE & BEST PRACTICES
+================================================================================
+
+1. EASE OF UNDERSTANDING
+   ✓ Intuitive numbering: VLAN 10 = 192.168.10.0/24 (pattern matching)
+   ✓ Consistent structure across all branches
+   ✓ Descriptive VLAN names matching business functions
+   ✓ ISP networks use recognizable public-like ranges (10.x, 20.x)
+
+2. PROTOCOL OPTIMIZATION
+   ✓ OSPF for dense main branch (many inter-VLAN routes)
+   ✓ EIGRP for WAN links (efficient bandwidth usage)
+   ✓ Separate AS numbers prevent routing loops
+   ✓ Redistribution at main routers only (controlled boundary)
+
+3. VOICE VLAN BEST PRACTICES
+   ✓ Separate VLAN 150 for QoS prioritization
+   ✓ Adequate IP space for phone growth
+   ✓ Consistent across all sites for unified communications
+
+4. MANAGEMENT NETWORK ISOLATION
+   ✓ VLAN 99 dedicated to network device management
+   ✓ Separates control plane from user data
+   ✓ Enhances security and troubleshooting
+
+5. VLSM/CIDR EFFICIENCY
+   ✓ Right-sized subnets (/24 for departments, /30 for P2P links)
+   ✓ Minimal IP waste
+   ✓ Summarization-friendly design
+
+6. REDUNDANCY SUPPORT
+   ✓ Dual ISP connections to main branch
+   ✓ HSRP virtual IPs for gateway redundancy (Main Branch)
+   ✓ Multiple paths via OSPF and EIGRP
+
+7. SECURITY CONSIDERATIONS
+   ✓ VLAN segmentation limits broadcast domains
+   ✓ Management VLAN isolated from user traffic
+   ✓ Inter-VLAN routing requires firewall/ACL enforcement points
+
+================================================================================
+                        QUICK REFERENCE TABLES
+================================================================================
+
+MAIN BRANCH (192.168.0.0/16) - VLAN SUMMARY
+--------------------------------------------------------------------------------
+VLAN    NAME                    SUBNET              GATEWAY         PROTOCOL
+--------------------------------------------------------------------------------
+10      Reception               192.168.10.0/24     .1 (HSRP)       Data
+20      Administration          192.168.20.0/24     .1 (HSRP)       Data
+30      Dispatch                192.168.30.0/24     .1 (HSRP)       Data
+40      Inventory               192.168.40.0/24     .1 (HSRP)       Data
+50      IT/Network Ops          192.168.50.0/24     .1 (HSRP)       Data
+60      Accounting              192.168.60.0/24     .1 (HSRP)       Data
+70      Quality Control         192.168.70.0/24     .1 (HSRP)       Data
+80      Driver Support          192.168.80.0/24     .1 (HSRP)       Data
+99      Management              192.168.99.0/24     .1              Mgmt
+150     Voice                   192.168.150.0/23    .1 (HSRP)       Voice
+200     Server Farm             192.168.200.0/24    .1              Servers
+
+BRANCH 1 (100.100.0.0/16) - VLAN SUMMARY
+--------------------------------------------------------------------------------
+VLAN    NAME                    SUBNET              GATEWAY         PROTOCOL
+--------------------------------------------------------------------------------
+10      Reception               100.100.10.0/24     .1              Data
+30      Dispatch                100.100.30.0/24     .1              Data
+40      Inventory               100.100.40.0/24     .1              Data
+70      Quality Control         100.100.70.0/24     .1              Data
+99      Management              100.100.99.0/24     .1              Mgmt
+150     Voice                   100.100.150.0/24    .1              Voice
+
+BRANCH 2 (200.200.0.0/16) - VLAN SUMMARY
+--------------------------------------------------------------------------------
+VLAN    NAME                    SUBNET              GATEWAY         PROTOCOL
+--------------------------------------------------------------------------------
+10      Reception               200.200.10.0/24     .1              Data
+30      Dispatch                200.200.30.0/24     .1              Data
+40      Inventory               200.200.40.0/24     .1              Data
+70      Quality Control         200.200.70.0/24     .1              Data
+99      Management              200.200.99.0/24     .1              Mgmt
+150     Voice                   200.200.150.0/24    .1              Voice
+
+ISP P2P LINKS - QUICK REFERENCE
+--------------------------------------------------------------------------------
+ISP         LINK DESCRIPTION                SUBNET          ENDPOINTS
+--------------------------------------------------------------------------------
+PLDT        Internal Backbone               10.10.1.0/30    .1 (R1) ↔ .2 (R2)
+PLDT        R1 → Main Branch R1             10.10.2.0/30    .1 (ISP) ↔ .2 (HQ)
+PLDT        R2 → Branch 2 R1                10.10.3.0/30    .1 (ISP) ↔ .2 (BR2)
+Globe       Internal Backbone               20.20.1.0/30    .1 (R1) ↔ .2 (R2)
+Globe       R1 → Main Branch R2             20.20.2.0/30    .1 (ISP) ↔ .2 (HQ)
+Globe       R2 → Branch 1 R1                20.20.3.0/30    .1 (ISP) ↔ .2 (BR1)
+
+ROUTING PROTOCOL SUMMARY
+--------------------------------------------------------------------------------
+LOCATION            INTERNAL PROTOCOL   WAN PROTOCOL    AS NUMBER
+--------------------------------------------------------------------------------
+Main Branch         OSPF Area 0         EIGRP           AS 100
+Branch 1            Static/EIGRP        EIGRP           AS 100
+Branch 2            Static/EIGRP        EIGRP           AS 100
+PLDT ISP            EIGRP               EIGRP           AS 1000
+Globe ISP           EIGRP               EIGRP           AS 2000
+
+================================================================================
+                        IMPLEMENTATION NOTES
+================================================================================
+
+1. VLAN CREATION ORDER
+   Step 1: Create VLANs on all switches
+   Step 2: Assign VLANs to access ports
+   Step 3: Configure trunk ports between switches
+   Step 4: Configure inter-VLAN routing (router-on-a-stick or L3 switching)
+
+2. IP ADDRESSING ASSIGNMENT
+   Step 1: Configure router/gateway interfaces first
+   Step 2: Configure switch management IPs (VLAN 99)
+   Step 3: Configure DHCP pools for user VLANs
+   Step 4: Assign static IPs to servers and network devices
+   Step 5: Configure IP phones in Voice VLAN with DHCP
+
+3. ROUTING PROTOCOL DEPLOYMENT
+   Step 1: Configure OSPF on Main Branch routers and MLS
+   Step 2: Configure EIGRP on all branch routers
+   Step 3: Configure EIGRP on ISP routers
+   Step 4: Set up route redistribution on Main Branch routers
+   Step 5: Verify routing tables and reachability
+
+4. VERIFICATION CHECKLIST
+   ✓ All VLANs created and assigned
+   ✓ Trunks operational (show interfaces trunk)
+   ✓ Inter-VLAN routing working (ping between VLANs)
+   ✓ OSPF neighbors established (show ip ospf neighbor)
+   ✓ EIGRP neighbors established (show ip eigrp neighbors)
+   ✓ Routing tables complete (show ip route)
+   ✓ DHCP pools assigning IPs correctly
+   ✓ IP phones registered and operational
+   ✓ Inter-branch connectivity verified
+   ✓ Internet connectivity through both ISPs
+
+================================================================================
+                        END OF DOCUMENT
+================================================================================
+
+Document Version: 1.0
+Last Updated: 2025-12-03
+Project: Kamote Korporation Network Infrastructure
+Created for: Networking II Finals Project

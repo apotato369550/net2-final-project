@@ -1,0 +1,160 @@
+================================================================================
+                    REDUNDANCY CONFIGURATION
+================================================================================
+
+================================================================================
+                    LAYER 2 REDUNDANCY - ETHERCHANNEL
+================================================================================
+
+MODES:
+  - active/passive  → LACP (standards-based, preferred)
+  - desirable/auto  → PAgP (Cisco proprietary)
+  - on              → Manual (no negotiation protocol)
+
+================================================================================
+                    1. LACP ETHERCHANNEL (ACTIVE MODE)
+================================================================================
+
+WHY: LACP is the industry standard (802.3ad). Active mode initiates negotiation.
+
+conf t
+int range fa0/16-17
+no shut
+channel-group 1 mode active
+
+
+int po 1
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+
+================================================================================
+                    2. PAGP ETHERCHANNEL (DESIRABLE MODE)
+================================================================================
+
+WHY: PAgP is Cisco proprietary. Desirable mode initiates negotiation.
+
+conf t
+int range fa0/18-19
+no shut
+channel-group 2 mode desirable
+
+
+int po 2
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+
+================================================================================
+                    LAYER 3 REDUNDANCY - HSRP
+================================================================================
+
+ROLES:
+  - Active Router   → Priority 105 (handles all traffic)
+  - Standby Router  → Priority 100 (backup, monitors active)
+  - Virtual IP      → Shared IP used by hosts as default gateway
+
+
+================================================================================
+                    4. HSRP - ACTIVE ROUTER CONFIGURATION
+================================================================================
+
+WHY: This router will be the primary gateway. Higher priority (105) makes it
+     the active router. Tracks uplink so failure demotes it to standby.
+
+conf t
+int g0/0
+ip add 10.28.0.2 255.255.255.248
+no shut
+
+
+int g0/1
+no shut
+
+
+int g0/1.10
+encapsulation dot1Q 10
+ip helper-address 10.28.0.1
+ip add 12.17.2.130 255.255.255.192
+standby version 2
+standby 10 ip 12.17.2.129
+standby 10 priority 105
+standby 10 preempt
+standby 10 track g0/0
+no shut
+
+
+int g0/1.20
+encapsulation dot1Q 20
+ip helper-address 10.28.0.1
+ip add 12.17.3.194 255.255.255.192
+standby version 2
+standby 20 ip 12.17.3.193
+standby 20 priority 105
+standby 20 preempt
+standby 20 track g0/0
+no shut
+
+
+int g0/1.99
+encapsulation dot1Q 99 native
+ip helper-address 10.28.0.1
+ip add 12.17.7.130 255.255.255.192
+standby version 2
+standby 99 ip 12.17.7.129
+standby 99 priority 105
+standby 99 preempt
+standby 99 track g0/0
+no shut
+
+
+
+================================================================================
+                    5. HSRP - STANDBY ROUTER CONFIGURATION
+================================================================================
+
+WHY: This is the backup router. Lower priority (100) keeps it in standby state
+     unless the active router fails. Then it immediately becomes active.
+
+conf t
+int g0/1
+ip add 10.29.0.2 255.255.255.248
+no shut
+
+int g0/2
+no shut
+
+int g0/2.10
+encapsulation dot1Q 10
+ip helper-address 10.29.0.1
+ip add 12.17.2.131 255.255.255.192
+standby version 2
+standby 10 ip 12.17.2.129
+standby 10 priority 100
+standby 10 preempt
+no shut
+
+int g0/2.20
+encapsulation dot1Q 20
+ip helper-address 10.29.0.1
+ip add 12.17.3.195 255.255.255.192
+standby version 2
+standby 20 ip 12.17.3.193
+standby 20 priority 100
+standby 20 preempt
+no shut
+
+int g0/2.99
+encapsulation dot1Q 99 native
+ip helper-address 10.29.0.1
+ip add 12.17.7.131 255.255.255.192
+standby version 2
+standby 99 ip 12.17.7.129
+standby 99 priority 100
+standby 99 preempt
+no shut
+

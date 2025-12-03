@@ -1,0 +1,239 @@
+================================================================================
+                    DHCPv6 CONFIGURATION
+================================================================================
+
+1. SLAAC (Stateless Address Autoconfiguration)
+   - Host creates its own IPv6 address from router's prefix
+   - Router advertises prefix via Router Advertisement (RA)
+   - NO DHCP server needed for addressing
+   - No DNS or domain info provided
+
+2. SLAAC + DHCPv6 (Stateless DHCPv6)
+   - Host creates its own IPv6 address (like SLAAC)
+   - DHCPv6 server provides ONLY DNS and domain name
+   - "Other-config-flag" set in RA tells hosts to use DHCPv6 for extra info
+
+3. Stateful DHCPv6
+   - DHCPv6 server assigns the complete IPv6 address
+   - Server also provides DNS and domain name
+   - "Managed-config-flag" set in RA tells hosts to use DHCPv6 for everything
+   - Most similar to DHCPv4
+
+
+================================================================================
+                    PREREQUISITE: ENABLE IPv6 ROUTING
+================================================================================
+
+WHY: IPv6 routing must be enabled on routers for any IPv6 configuration.
+     This allows the router to send Router Advertisements (RA).
+
+--- ALWAYS RUN THIS FIRST ---
+
+conf t
+ipv6 unicast-routing
+
+
+================================================================================
+                    1. SLAAC ONLY (NO DHCPv6 SERVER)
+================================================================================
+
+WHY: Simplest method. Hosts automatically configure themselves using the
+     router's advertised prefix. No server management needed.
+
+CONCEPT (from the-text.txt):
+  - Enable IPv6 on sub-interface
+  - Assign IPv6 address with /64 prefix
+  - Router automatically sends RAs with prefix info
+  - Hosts use EUI-64 or privacy extensions to create full address
+
+
+conf t
+ipv6 unicast-routing
+
+int g0/0.10
+ipv6 add 2001:DB8:ACAD:10::1/64
+no shut
+ipv6 enable
+exit
+
+int g0/0.20
+ipv6 add 2001:DB8:ACAD:20::1/64
+no shut
+ipv6 enable
+end
+
+
+================================================================================
+                    2. STATELESS DHCPv6 (SLAAC + DHCPv6)
+================================================================================
+
+WHY: Hosts create their own addresses (SLAAC) but get DNS and domain info
+     from a DHCPv6 server. Best of both worlds for many networks.
+
+CONCEPT (from the-text.txt):
+  - Create DHCPv6 pool with DNS and domain name (NO address assignment)
+  - Configure sub-interface with IPv6 address
+  - Set "other-config-flag" to tell hosts to use DHCPv6 for extra info
+  - Assign DHCPv6 pool to interface
+
+conf t
+ipv6 unicast-routing
+
+ipv6 dhcp pool ACCOUNTING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+exit
+
+ipv6 dhcp pool MARKETING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+exit
+
+int g0/1.10
+ipv6 add 2001:DB8:ACAD:10::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server ACCOUNTING
+exit
+
+int g0/1.20
+ipv6 add 2001:DB8:ACAD:20::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MARKETING
+end
+
+
+================================================================================
+                    3. STATEFUL DHCPv6 (FULL DHCPv6)
+================================================================================
+
+WHY: Server assigns complete IPv6 addresses plus DNS/domain info. Most control,
+     most similar to DHCPv4. Required when you need precise IP management.
+
+CONCEPT (from the-text.txt):
+  - Create DHCPv6 pool with address prefix AND DNS/domain
+  - Configure sub-interface with IPv6 address
+  - Set "managed-config-flag" to tell hosts to use DHCPv6 for addressing
+  - Disable "other-config-flag" (managed-config-flag overrides it)
+  - Assign DHCPv6 pool to interface
+
+conf t
+ipv6 unicast-routing
+
+ipv6 dhcp pool VLAN30
+address prefix 2001:DB8:ACAD:30::/64
+dns-server 2001:4860:4860::8888
+domain-name www.dcism.com
+exit
+
+int g0/1.30
+ipv6 enable
+ipv6 address 2001:DB8:ACAD:30::1/64
+ipv6 nd managed-config-flag
+no ipv6 nd other-config-flag
+ipv6 dhcp server VLAN30
+no shut
+end
+
+
+================================================================================
+                    COMPLETE DHCPv6 EXAMPLE (MIXED CONFIGURATION)
+================================================================================
+
+This shows SLAAC, Stateless DHCPv6, and Stateful DHCPv6 all on one router.
+
+--- COMPLETE EXAMPLE (READY TO COPY) ---
+
+conf t
+ipv6 unicast-routing
+
+! Create DHCPv6 pools
+ipv6 dhcp pool ACCOUNTING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+exit
+
+ipv6 dhcp pool MARKETING
+dns-server 2001:DB8:ACAD:150::1
+domain-name cisco.com
+exit
+
+ipv6 dhcp pool SALES
+address prefix 2001:DB8:ACAD:30::/64
+dns-server 2001:4860:4860::8888
+domain-name cisco.com
+exit
+
+! Enable physical interface
+int g0/1
+no shut
+exit
+
+! VLAN 10 - Stateless DHCPv6 (SLAAC + DHCPv6)
+int g0/1.10
+ipv6 add 2001:DB8:ACAD:10::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server ACCOUNTING
+exit
+
+! VLAN 20 - Stateless DHCPv6 (SLAAC + DHCPv6)
+int g0/1.20
+ipv6 add 2001:DB8:ACAD:20::2/64
+no shut
+ipv6 enable
+ipv6 nd other-config-flag
+ipv6 dhcp server MARKETING
+exit
+
+! VLAN 30 - Stateful DHCPv6 (Full DHCPv6)
+int g0/1.30
+ipv6 enable
+ipv6 address 2001:DB8:ACAD:30::2/64
+ipv6 nd managed-config-flag
+no ipv6 nd other-config-flag
+ipv6 dhcp server SALES
+no shut
+end
+
+
+================================================================================
+                    DHCPv6 FLAG QUICK REFERENCE
+================================================================================
+
+Router Advertisement (RA) Flags:
+
+┌──────────────────────┬──────────────────┬──────────────────┬─────────────┐
+│ Method               │ M-Flag (managed) │ O-Flag (other)   │ Address     │
+├──────────────────────┼──────────────────┼──────────────────┼─────────────┤
+│ SLAAC Only           │ 0 (default)      │ 0 (default)      │ SLAAC       │
+│ Stateless DHCPv6     │ 0 (default)      │ 1 (set)          │ SLAAC       │
+│ Stateful DHCPv6      │ 1 (set)          │ 0 (disable)      │ DHCPv6      │
+└──────────────────────┴──────────────────┴──────────────────┴─────────────┘
+
+Commands:
+  ipv6 nd managed-config-flag    → Sets M-flag = 1 (use DHCPv6 for address)
+  ipv6 nd other-config-flag      → Sets O-flag = 1 (use DHCPv6 for DNS/domain)
+
+
+================================================================================
+                    QUICK REFERENCE COMMANDS
+================================================================================
+
+View DHCPv6 bindings:                 show ipv6 dhcp binding
+View DHCPv6 pool:                     show ipv6 dhcp pool
+View DHCPv6 interface:                show ipv6 dhcp interface
+View IPv6 interface addressing:       show ipv6 interface brief
+View IPv6 neighbors:                  show ipv6 neighbors
+Debug DHCPv6:                         debug ipv6 dhcp
+
+ON WINDOWS CLIENT:
+View IPv6 address:                    ipconfig
+Release IPv6 address:                 ipconfig /release6
+Renew IPv6 address:                   ipconfig /renew6
+
+================================================================================

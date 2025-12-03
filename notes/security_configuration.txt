@@ -1,0 +1,178 @@
+================================================================================
+                    SECURITY CONFIGURATION
+================================================================================
+
+PURPOSE: Implement port security and AAA (Authentication, Authorization, and
+         Accounting) to protect network devices and control access.
+
+
+================================================================================
+                    1. PORT SECURITY - STICKY MAC ADDRESS LEARNING
+================================================================================
+
+WHY: Automatically learns and saves MAC addresses of connected devices.
+     Combines convenience of dynamic learning with persistence of static config.
+
+conf t
+int range fa0/1-12
+switchport mode access
+switchport port-security
+switchport port-security maximum 2
+switchport port-security mac-address sticky
+switchport port-security violation shutdown
+end
+
+
+================================================================================
+                    2. PORT SECURITY - MANUAL MAC ADDRESS ASSIGNMENT
+================================================================================
+
+WHY: Explicitly define which MAC addresses are allowed on a port. Most secure
+     but requires knowing device MAC addresses in advance.
+
+conf t
+int fa0/1
+switchport mode access
+switchport port-security
+switchport port-security mac-address 0050.7966.6800
+switchport port-security violation shutdown/protect/restrict
+end
+
+
+================================================================================
+                    3. SHUTDOWN UNUSED PORTS (SECURITY BEST PRACTICE)
+================================================================================
+
+conf t
+int range fa0/13-24
+shutdown
+end
+
+================================================================================
+                    4. RECOVERING FROM PORT SECURITY VIOLATION
+================================================================================
+
+WHY: When a port is shut down due to violation, you must manually re-enable it
+     after removing the offending device.
+
+conf t
+int fa0/5
+shutdown
+no shutdown
+end
+
+
+================================================================================
+                    AAA - AUTHENTICATION, AUTHORIZATION, ACCOUNTING
+================================================================================
+
+
+================================================================================
+                     LOCAL AAA CONFIGURATION
+================================================================================
+
+WHY: Simple AAA for small networks without external servers. Users are stored
+     in the device's running-config.
+
+CONCEPT (from the-text.txt):
+  - Create local username database
+  - Enable AAA with "aaa new-model"
+  - Set authentication to use local database
+  - Apply to console line
+
+conf t
+username admin secret admin
+aaa new-model
+aaa authentication login default local
+line con 0
+login authentication default
+end
+
+
+================================================================================
+                    7. TACACS+ SERVER CONFIGURATION
+================================================================================
+
+WHY: TACACS+ provides centralized AAA with full packet encryption. Preferred
+     for Cisco device administration due to granular authorization control.
+
+CONCEPT (from the-text.txt):
+  - Create local user as backup (if TACACS+ server fails)
+  - Define TACACS+ server IP and shared key
+  - Enable AAA and set authentication method (TACACS+ first, local backup)
+  - Enable accounting to track admin sessions
+
+--- EDITABLE TEMPLATE ---
+
+conf t
+username admin2 secret admin2pa55
+tacacs-server host 192.168.2.2
+tacacs-server key tacacspa55
+aaa new-model
+aaa authentication login default group tacacs+ local
+aaa accounting exec default start-stop group tacacs+
+line console 0
+login authentication default
+end
+
+
+================================================================================
+                    8. RADIUS SERVER CONFIGURATION
+================================================================================
+
+WHY: RADIUS is industry standard AAA, commonly used for wireless and VPN
+     authentication. Lighter weight than TACACS+ but less granular control.
+
+CONCEPT (from the-text.txt):
+  - Create local user as backup (if RADIUS server fails)
+  - Define RADIUS server IP and shared key
+  - Enable AAA and set authentication method (RADIUS first, local backup)
+  - Enable accounting to track admin sessions
+
+conf t
+username admin3 secret admin3pa55
+radius-server host 192.168.3.2
+radius-server key radiuspa55
+aaa new-model
+aaa authentication login default group radius local
+aaa accounting exec default start-stop group radius
+line console 0
+login authentication default
+end
+
+
+================================================================================
+                    TACACS+ vs RADIUS COMPARISON
+================================================================================
+
+┌──────────────────────┬────────────────────┬──────────────────────────────┐
+│ Feature              │ TACACS+            │ RADIUS                       │
+├──────────────────────┼────────────────────┼──────────────────────────────┤
+│ Vendor               │ Cisco proprietary  │ Industry standard (RFC 2865) │
+│ Transport Protocol   │ TCP 49             │ UDP 1812/1813                │
+│ Encryption           │ Entire packet      │ Password only                │
+│ AAA Functions        │ Separates AAA      │ Combines Auth + Author       │
+│ Authorization        │ Granular control   │ Limited control              │
+│ Best Use Case        │ Device admin       │ Network access (Wi-Fi, VPN)  │
+└──────────────────────┴────────────────────┴──────────────────────────────┘
+
+
+================================================================================
+                    QUICK REFERENCE COMMANDS
+================================================================================
+
+PORT SECURITY:
+View port security status:            show port-security
+View specific interface:              show port-security interface <INT>
+View addresses learned:               show port-security address
+View violation count:                 show port-security interface <INT>
+Clear violation counter:              clear port-security violation
+
+AAA:
+View AAA configuration:               show aaa authentication
+View AAA sessions:                    show aaa sessions
+View TACACS+ server status:           show tacacs
+View RADIUS server status:            show radius statistics
+Test AAA authentication:              test aaa group <tacacs+|radius> <user>
+
+================================================================================
