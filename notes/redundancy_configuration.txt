@@ -30,6 +30,51 @@ switchport trunk allowed vlan 1-1000
 exit
 
 
+
+conf t
+int range fa0/23-24
+no shut
+channel-group 1 mode active
+
+
+int po 1
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+
+no shut
+channel-group 2 mode active
+
+
+int po 2
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+no shut
+channel-group 3 mode active
+
+
+int po 3
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+no shut
+channel-group 4 mode active
+
+
+int po 4
+switchport mode trunk
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+exit
+
+
 ================================================================================
                     2. PAGP ETHERCHANNEL (DESIRABLE MODE)
 ================================================================================

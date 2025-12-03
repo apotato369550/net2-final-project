@@ -17,10 +17,10 @@ conf t
 int range fa0/1-12
 switchport mode access
 switchport port-security
-switchport port-security maximum 2
+switchport port-security maximum 5
 switchport port-security mac-address sticky
 switchport port-security violation shutdown
-end
+exit
 
 
 ================================================================================

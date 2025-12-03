@@ -1,0 +1,274 @@
+================================================================================
+                    MULTILAYER SWITCH 2 CONFIGURATION COMMANDS
+================================================================================
+Based on MLS1, but with NO ACCESS PORTS - only trunks and port-channels
+Includes etherchannel trunk fix pre-applied
+
+--------------------------------------------------------------------------------
+                    BASIC CONFIGURATION
+--------------------------------------------------------------------------------
+enable
+configure terminal
+hostname MultilayerSwitch2
+enable secret cisco
+service password-encryption
+ip domain-name cisco.com
+ip ssh version 2
+username admin secret cisco
+banner motd ^CAuthorized Personnel Only!^C
+exit
+
+--------------------------------------------------------------------------------
+                    PORT-CHANNEL CONFIGURATION (WITH TRUNK FIX!)
+--------------------------------------------------------------------------------
+configure terminal
+
+! Port-channel 1 - WITH ENCAPSULATION FIRST!
+interface Port-channel1
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Port-channel 2 - WITH ENCAPSULATION FIRST!
+interface Port-channel2
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Port-channel 3 - WITH ENCAPSULATION FIRST!
+interface Port-channel3
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Port-channel 4 - WITH ENCAPSULATION FIRST!
+interface Port-channel4
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+exit
+
+--------------------------------------------------------------------------------
+                    PHYSICAL INTERFACE CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+
+! Shutdown unused access ports (Fa0/1-3 were access ports in MLS1)
+interface range FastEthernet0/1-3
+shutdown
+exit
+
+! Shutdown unused ports (Fa0/4-15)
+interface range FastEthernet0/4-16
+shutdown
+exit
+
+! Fa0/16 - Configured but shutdown (reserved for future use)
+interface FastEthernet0/16
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+shutdown
+exit
+
+! Fa0/17-18 - Port-channel 4 members
+interface range FastEthernet0/17-18
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+channel-group 4 mode active
+no shutdown
+exit
+
+! Fa0/19-20 - Port-channel 3 members
+interface range FastEthernet0/19-20
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+channel-group 3 mode active
+no shutdown
+exit
+
+! Fa0/21-22 - Port-channel 2 members
+interface range FastEthernet0/21-22
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+channel-group 2 mode active
+no shutdown
+exit
+
+! Fa0/23-24 - Port-channel 1 members
+interface range FastEthernet0/23-24
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+channel-group 1 mode active
+no shutdown
+exit
+
+! GigabitEthernet0/1 - Connection to Edge Router (routed port, not switched)
+interface GigabitEthernet0/1
+no switchport
+no ip address
+duplex auto
+speed auto
+no shutdown
+exit
+
+! GigabitEthernet0/2 - Shutdown (unused)
+interface GigabitEthernet0/2
+shutdown
+exit
+
+! VLAN 1 interface - Shutdown (not used)
+interface Vlan1
+no ip address
+shutdown
+exit
+
+exit
+
+--------------------------------------------------------------------------------
+                    SPANNING-TREE CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+spanning-tree mode pvst
+exit
+
+--------------------------------------------------------------------------------
+                    LINE CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+
+! Console line
+line con 0
+password cisco
+login
+exit
+
+! VTY lines 0-4 (Telnet)
+line vty 0 4
+password cisco
+login
+transport input telnet
+exit
+
+! VTY lines 5-15 (SSH)
+line vty 5 15
+login local
+transport input ssh
+exit
+
+exit
+
+--------------------------------------------------------------------------------
+                    SAVE CONFIGURATION
+--------------------------------------------------------------------------------
+copy running-config startup-config
+(Press Enter to confirm)
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+! Verify Port-channels are up and in trunk mode:
+show etherchannel summary
+
+! THIS SHOULD NOW SHOW ALL 4 PORT-CHANNELS (with the fix applied):
+show interfaces trunk
+
+! Verify individual Port-channel trunk status:
+show interfaces Port-channel1 switchport
+show interfaces Port-channel2 switchport
+show interfaces Port-channel3 switchport
+show interfaces Port-channel4 switchport
+
+! Check physical interface status:
+show ip interface brief
+
+! Verify channel-group membership:
+show etherchannel port-channel
+
+! Check spanning-tree status:
+show spanning-tree summary
+
+================================================================================
+                    KEY DIFFERENCES FROM MLS1
+================================================================================
+
+REMOVED:
+--------
+- FastEthernet0/1-3 access port configuration (VLAN 99 access ports)
+- Port security on Fa0/1-3
+- All access port configurations
+
+KEPT:
+-----
+- All 4 Port-channels (Po1, Po2, Po3, Po4)
+- EtherChannel configuration on Fa0/17-24
+- Trunk configuration on all active ports
+- GigabitEthernet0/1 as routed port for edge router connection
+- Security settings (passwords, SSH, banner)
+- Spanning-tree configuration
+
+FIXED:
+------
+- Added "switchport trunk encapsulation dot1q" to all Port-channels FIRST
+- This ensures Port-channels appear in "show interfaces trunk"
+- Proper order: encapsulation → native vlan → allowed vlans → mode trunk
+
+TOPOLOGY:
+---------
+This MLS2 is designed for:
+- Pure Layer 2/3 switching (no end-user access ports)
+- 4 Port-channels for redundant connections to other switches
+- 1 routed uplink (Gi0/1) to edge router
+- All inter-switch links are trunks carrying VLANs 1-1000
+- Native VLAN 99 on all trunks
+
+================================================================================
+                    RECOMMENDED VLAN CONFIGURATION
+================================================================================
+
+If you need to create VLANs on this switch, add:
+
+configure terminal
+vlan 10
+name VLAN10
+exit
+vlan 20
+name VLAN20
+exit
+vlan 30
+name VLAN30
+exit
+vlan 99
+name Management
+exit
+vlan 150
+name Voice
+exit
+exit
+
+================================================================================
+END OF MLS2 CONFIGURATION
+================================================================================

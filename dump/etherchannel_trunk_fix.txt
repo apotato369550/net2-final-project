@@ -1,0 +1,152 @@
+================================================================================
+                    ETHERCHANNEL TRUNK ISSUE DIAGNOSIS
+================================================================================
+
+PROBLEM IDENTIFIED:
+-------------------
+Your Port-channels (1, 2, 3, 4) appear in "show etherchannel summary" but NOT
+in "show interfaces trunk". This means the Port-channels are not functioning
+as trunk ports even though they have trunk configurations.
+
+ROOT CAUSE:
+-----------
+Looking at your mls.txt configuration, the Port-channel interfaces are missing
+the "switchport trunk encapsulation dot1q" command. In Cisco Multilayer Switches,
+you MUST set the encapsulation type BEFORE setting the switchport mode to trunk.
+
+Current Port-channel config (INCOMPLETE):
+    interface Port-channel1
+     switchport trunk native vlan 99
+     switchport trunk allowed vlan 1-1000
+     switchport mode trunk              <-- Missing encapsulation!
+
+Physical interfaces (Fa0/17-24) have the encapsulation, but Port-channels don't.
+When Port-channels are formed, they inherit SOME but not all settings, and the
+encapsulation must be explicitly set on the Port-channel interface itself.
+
+WHAT WENT WRONG:
+----------------
+1. Port-channels were created without trunk encapsulation being set first
+2. The "switchport mode trunk" command likely failed silently or defaulted
+   to access mode
+3. Port-channels exist and are up, but are not functioning as trunks
+4. VLANs are not being passed through the Port-channels
+
+================================================================================
+                    FIX COMMANDS (COPY-PASTE READY)
+================================================================================
+
+enable
+configure terminal
+
+! Fix Port-channel 1
+interface Port-channel1
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Fix Port-channel 2
+interface Port-channel2
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Fix Port-channel 3
+interface Port-channel3
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+! Fix Port-channel 4
+interface Port-channel4
+switchport trunk encapsulation dot1q
+switchport trunk native vlan 99
+switchport trunk allowed vlan 1-1000
+switchport mode trunk
+no shutdown
+exit
+
+exit
+
+! Save configuration
+copy running-config startup-config
+(Press Enter to confirm)
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+! This should now show all 4 Port-channels:
+show interfaces trunk
+
+! Verify Port-channels are in trunk mode:
+show interfaces Port-channel1 switchport
+show interfaces Port-channel2 switchport
+show interfaces Port-channel3 switchport
+show interfaces Port-channel4 switchport
+
+! Verify EtherChannel status (should still show all 4):
+show etherchannel summary
+
+! Check which VLANs are allowed on trunks:
+show interfaces trunk | include Port-channel
+
+! Detailed trunk information:
+show interfaces trunk | begin Port
+
+================================================================================
+                    EXPLANATION
+================================================================================
+
+Why "switchport trunk encapsulation dot1q" is needed:
+-----------------------------------------------------
+- Cisco switches support multiple trunking protocols (ISL and 802.1Q)
+- ISL is Cisco proprietary (older)
+- 802.1Q (dot1q) is the IEEE standard (modern)
+- You must explicitly tell the switch which encapsulation to use BEFORE
+  setting the port to trunk mode
+- Without this command, the switch doesn't know how to tag frames
+
+Order of commands matters:
+--------------------------
+1. switchport trunk encapsulation dot1q    <-- FIRST
+2. switchport trunk native vlan 99         <-- Configure trunk settings
+3. switchport trunk allowed vlan 1-1000    <-- Configure trunk settings
+4. switchport mode trunk                   <-- LAST (activates trunk mode)
+
+Port-channel specific notes:
+----------------------------
+- Port-channels do NOT automatically inherit all settings from member ports
+- You must configure trunk encapsulation directly on the Port-channel interface
+- Member ports (physical interfaces) pass their encapsulation up, but the
+  Port-channel still needs explicit configuration
+
+================================================================================
+                    BEST PRACTICES
+================================================================================
+
+1. Always configure Port-channel interface BEFORE adding member ports
+2. Set encapsulation FIRST, then trunk mode
+3. Verify with "show interfaces trunk" after configuration
+4. Use "show etherchannel summary" to verify channel is up
+5. Use "show interfaces Port-channelX switchport" to verify trunk settings
+
+Common mistakes to avoid:
+-------------------------
+- Configuring member ports before the Port-channel interface
+- Forgetting to set encapsulation on Port-channel
+- Setting different encapsulations on Port-channel vs member ports
+- Not matching trunk settings between Port-channel and member ports
+
+================================================================================
+END OF DIAGNOSIS AND FIX
+================================================================================

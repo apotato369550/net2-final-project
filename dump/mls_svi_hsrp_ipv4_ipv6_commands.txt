@@ -1,0 +1,536 @@
+================================================================================
+                    MLS1 & MLS2 SVI + HSRP CONFIGURATION
+================================================================================
+VLAN 99 Device Addressing:
+  .1   = Virtual IP (HSRP)
+  .2   = MLS1 (Active/Primary)
+  .3   = MLS2 (Standby/Backup)
+  .4   = DHCP/DNS Server
+  .5   = HTTP Server
+  .6-.12 = 7 Managed Switches
+  .13  = Edge Router 1
+  .14  = Edge Router 2
+
+Data VLANs (10,20,30,40,50,60,70,80,150):
+  .1   = Virtual IP (HSRP)
+  .2   = MLS1 SVI
+  .3   = MLS2 SVI
+  .4+ = Usable DHCP pool
+
+================================================================================
+                    MLS1 CONFIGURATION (PRIMARY/ACTIVE)
+================================================================================
+
+enable
+configure terminal
+ip routing
+ipv6 unicast-routing
+
+! ============================================================================
+!                           VLAN CREATION
+! ============================================================================
+vlan 10
+name Reception
+exit
+vlan 20
+name Administration
+exit
+vlan 30
+name Dispatch
+exit
+vlan 40
+name Inventory
+exit
+vlan 50
+name IT
+exit
+vlan 60
+name Accounting
+exit
+vlan 70
+name QualityControl
+exit
+vlan 80
+name DriverSupport
+exit
+vlan 99
+name Management
+exit
+vlan 150
+name Voice
+exit
+
+! ============================================================================
+!                           VLAN 10 - Reception
+! ============================================================================
+interface vlan 10
+ip address 192.168.10.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:10::2/64
+ipv6 nd prefix 2001:DB8:A:10::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 10 ip 192.168.10.1
+standby 10 priority 110
+standby 10 preempt
+standby 10 ipv6 2001:DB8:A:10::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 20 - Administration
+! ============================================================================
+interface vlan 20
+ip address 192.168.20.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:20::2/64
+ipv6 nd prefix 2001:DB8:A:20::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 20 ip 192.168.20.1
+standby 20 priority 110
+standby 20 preempt
+standby 20 ipv6 2001:DB8:A:20::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 30 - Dispatch
+! ============================================================================
+interface vlan 30
+ip address 192.168.30.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:30::2/64
+ipv6 nd prefix 2001:DB8:A:30::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 30 ip 192.168.30.1
+standby 30 priority 110
+standby 30 preempt
+standby 30 ipv6 2001:DB8:A:30::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 40 - Inventory
+! ============================================================================
+interface vlan 40
+ip address 192.168.40.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:40::2/64
+ipv6 nd prefix 2001:DB8:A:40::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 40 ip 192.168.40.1
+standby 40 priority 110
+standby 40 preempt
+standby 40 ipv6 2001:DB8:A:40::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 50 - IT
+! ============================================================================
+interface vlan 50
+ip address 192.168.50.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:50::2/64
+ipv6 nd prefix 2001:DB8:A:50::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 50 ip 192.168.50.1
+standby 50 priority 110
+standby 50 preempt
+standby 50 ipv6 2001:DB8:A:50::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 60 - Accounting
+! ============================================================================
+interface vlan 60
+ip address 192.168.60.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:60::2/64
+ipv6 nd prefix 2001:DB8:A:60::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 60 ip 192.168.60.1
+standby 60 priority 110
+standby 60 preempt
+standby 60 ipv6 2001:DB8:A:60::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 70 - Quality Control
+! ============================================================================
+interface vlan 70
+ip address 192.168.70.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:70::2/64
+ipv6 nd prefix 2001:DB8:A:70::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 70 ip 192.168.70.1
+standby 70 priority 110
+standby 70 preempt
+standby 70 ipv6 2001:DB8:A:70::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 80 - Driver Support
+! ============================================================================
+interface vlan 80
+ip address 192.168.80.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:80::2/64
+ipv6 nd prefix 2001:DB8:A:80::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 80 ip 192.168.80.1
+standby 80 priority 110
+standby 80 preempt
+standby 80 ipv6 2001:DB8:A:80::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 99 - Management
+! ============================================================================
+interface vlan 99
+ip address 192.168.99.2 255.255.255.0
+ipv6 address 2001:DB8:A:99::2/64
+ipv6 nd prefix 2001:DB8:A:99::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 99 ip 192.168.99.1
+standby 99 priority 110
+standby 99 preempt
+standby 99 ipv6 2001:DB8:A:99::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 150 - Voice
+! ============================================================================
+interface vlan 150
+ip address 192.168.150.2 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:150::2/64
+ipv6 nd prefix 2001:DB8:A:150::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 150 ip 192.168.150.1
+standby 150 priority 110
+standby 150 preempt
+standby 150 ipv6 2001:DB8:A:150::1
+no shutdown
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    MLS2 CONFIGURATION (BACKUP/STANDBY)
+================================================================================
+
+enable
+configure terminal
+ip routing
+ipv6 unicast-routing
+
+! ============================================================================
+!                           VLAN CREATION
+! ============================================================================
+vlan 10
+name Reception
+exit
+vlan 20
+name Administration
+exit
+vlan 30
+name Dispatch
+exit
+vlan 40
+name Inventory
+exit
+vlan 50
+name IT
+exit
+vlan 60
+name Accounting
+exit
+vlan 70
+name QualityControl
+exit
+vlan 80
+name DriverSupport
+exit
+vlan 99
+name Management
+exit
+vlan 150
+name Voice
+exit
+
+! ============================================================================
+!                           VLAN 10 - Reception
+! ============================================================================
+interface vlan 10
+ip address 192.168.10.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:10::13/64
+ipv6 nd prefix 2001:DB8:A:10::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 10 ip 192.168.10.11
+standby 10 priority 100
+standby 10 preempt
+standby 10 ipv6 2001:DB8:A:10::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 20 - Administration
+! ============================================================================
+interface vlan 20
+ip address 192.168.20.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:20::13/64
+ipv6 nd prefix 2001:DB8:A:20::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 20 ip 192.168.20.11
+standby 20 priority 100
+standby 20 preempt
+standby 20 ipv6 2001:DB8:A:20::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 30 - Dispatch
+! ============================================================================
+interface vlan 30
+ip address 192.168.30.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:30::13/64
+ipv6 nd prefix 2001:DB8:A:30::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 30 ip 192.168.30.11
+standby 30 priority 100
+standby 30 preempt
+standby 30 ipv6 2001:DB8:A:30::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 40 - Inventory
+! ============================================================================
+interface vlan 40
+ip address 192.168.40.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:40::13/64
+ipv6 nd prefix 2001:DB8:A:40::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 40 ip 192.168.40.11
+standby 40 priority 100
+standby 40 preempt
+standby 40 ipv6 2001:DB8:A:40::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 50 - IT
+! ============================================================================
+interface vlan 50
+ip address 192.168.50.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:50::13/64
+ipv6 nd prefix 2001:DB8:A:50::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 50 ip 192.168.50.11
+standby 50 priority 100
+standby 50 preempt
+standby 50 ipv6 2001:DB8:A:50::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 60 - Accounting
+! ============================================================================
+interface vlan 60
+ip address 192.168.60.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:60::13/64
+ipv6 nd prefix 2001:DB8:A:60::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 60 ip 192.168.60.11
+standby 60 priority 100
+standby 60 preempt
+standby 60 ipv6 2001:DB8:A:60::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 70 - Quality Control
+! ============================================================================
+interface vlan 70
+ip address 192.168.70.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:70::13/64
+ipv6 nd prefix 2001:DB8:A:70::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 70 ip 192.168.70.11
+standby 70 priority 100
+standby 70 preempt
+standby 70 ipv6 2001:DB8:A:70::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 80 - Driver Support
+! ============================================================================
+interface vlan 80
+ip address 192.168.80.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:80::13/64
+ipv6 nd prefix 2001:DB8:A:80::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 80 ip 192.168.80.11
+standby 80 priority 100
+standby 80 preempt
+standby 80 ipv6 2001:DB8:A:80::11
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 99 - Management
+! ============================================================================
+interface vlan 99
+ip address 192.168.99.3 255.255.255.0
+ipv6 address 2001:DB8:A:99::3/64
+ipv6 nd prefix 2001:DB8:A:99::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 99 ip 192.168.99.1
+standby 99 priority 100
+standby 99 preempt
+standby 99 ipv6 2001:DB8:A:99::1
+no shutdown
+exit
+
+! ============================================================================
+!                           VLAN 150 - Voice
+! ============================================================================
+interface vlan 150
+ip address 192.168.150.13 255.255.255.0
+ip helper-address 192.168.99.4
+ipv6 address 2001:DB8:A:150::13/64
+ipv6 nd prefix 2001:DB8:A:150::/64
+no ipv6 nd suppress-ra
+standby version 2
+standby 150 ip 192.168.150.11
+standby 150 priority 100
+standby 150 preempt
+standby 150 ipv6 2001:DB8:A:150::11
+no shutdown
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    VLAN 99 DEVICE IP ASSIGNMENTS
+================================================================================
+
+192.168.99.1   = Virtual IP (HSRP - Gateway for all devices)
+192.168.99.2   = MLS1 (Primary/Active)
+192.168.99.3   = MLS2 (Backup/Standby)
+192.168.99.4   = DHCP/DNS Server
+192.168.99.5   = HTTP/Web Server
+192.168.99.6   = Managed Switch 1
+192.168.99.7   = Managed Switch 2
+192.168.99.8   = Managed Switch 3
+192.168.99.9   = Managed Switch 4
+192.168.99.10  = Managed Switch 5
+192.168.99.11  = Managed Switch 6
+192.168.99.12  = Managed Switch 7
+192.168.99.13  = Edge Router 1
+192.168.99.14  = Edge Router 2
+
+IPv6 VLAN 99:
+2001:DB8:A:99::1   = Virtual IPv6 (HSRP)
+2001:DB8:A:99::2   = MLS1
+2001:DB8:A:99::3   = MLS2
+2001:DB8:A:99::4   = DHCP/DNS Server
+2001:DB8:A:99::5   = HTTP/Web Server
+2001:DB8:A:99::6   = Managed Switch 1
+2001:DB8:A:99::7   = Managed Switch 2
+2001:DB8:A:99::8   = Managed Switch 3
+2001:DB8:A:99::9   = Managed Switch 4
+2001:DB8:A:99::10  = Managed Switch 5
+2001:DB8:A:99::11  = Managed Switch 6
+2001:DB8:A:99::12  = Managed Switch 7
+2001:DB8:A:99::13  = Edge Router 1
+2001:DB8:A:99::14  = Edge Router 2
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+! Check HSRP status (should show Active on MLS1, Standby on MLS2):
+show standby brief
+
+! Detailed HSRP info per VLAN:
+show standby vlan 10
+show standby vlan 99
+
+! Check SVI status:
+show ip interface brief | include Vlan
+show ipv6 interface brief | include Vlan
+
+! Verify IPv6 Router Advertisements:
+show ipv6 interface vlan 10
+
+! Test connectivity:
+ping 192.168.10.11
+ping 192.168.99.1
+ping ipv6 2001:DB8:A:10::11
+
+================================================================================
+                    KEY POINTS
+================================================================================
+
+HSRP Configuration:
+- MLS1: Priority 110 (Active/Primary)
+- MLS2: Priority 100 (Standby/Backup)
+- Virtual IPs end in .11 for data VLANs, .1 for VLAN 99
+- HSRPv2 used (supports IPv6)
+- Preempt enabled (active router reclaims role if it comes back up)
+
+IPv4 Helper Address:
+- All SVIs point to 192.168.99.4 for DHCP relay
+- VLAN 99 has no helper (it IS the management network)
+
+IPv6 SLAAC:
+- Router Advertisements enabled on all SVIs
+- Devices will autoconfigure IPv6 addresses
+- HSRP virtual IPv6 addresses configured
+- Prefix advertisements enabled
+
+Data VLAN Addressing:
+- .1-.10: Reserved for admin use
+- .11: Virtual IP (HSRP gateway)
+- .12: MLS1 SVI IP
+- .13: MLS2 SVI IP
+- .14+: Available for DHCP pool
+
+================================================================================

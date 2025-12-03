@@ -5,13 +5,25 @@
 
 conf t
 vlan 10
-name ACCOUNTING
+name Accounting
 vlan 20
 name HR
 vlan 30
-name MARKETING
+name Marketing
+vlan 40 
+name IT
+vlan 50
+name Support
+vlan 60
+name Logistics
+vlan 70
+name Drivers
+vlan 80
+name QA
 vlan 99
-name MANAGEMENT
+name Admin
+vlan 150
+name Voice
 
 int vlan 10
 ip add 200.130.107.2 255.255.255.128

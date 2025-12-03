@@ -1,0 +1,87 @@
+vlan 10
+name Accounting
+vlan 20
+name HR
+vlan 30
+name Marketing
+vlan 40 
+name IT
+vlan 50
+name Support
+vlan 60
+name Logistics
+vlan 70
+name Drivers
+vlan 80
+name QA
+vlan 99
+name Admin
+vlan 150
+name Voice
+
+addressing scheme:
+================================================================================
+                    MAIN BRANCH (HQ) - CEBU CITY, BANILAD
+================================================================================
+
+BASE NETWORK: 192.168.0.0/16
+ROUTING PROTOCOL: OSPF (Area 0)
+TOTAL VLANS: 10 (8 Department + 1 Management + 1 Voice)
+
+--------------------------------------------------------------------------------
+                        DEPARTMENT DATA VLANs
+--------------------------------------------------------------------------------
+
+VLAN 10 - Reception/Customer Service
+  Subnet:        192.168.10.0/24
+
+
+VLAN 20 - Administration
+  Subnet:        192.168.20.0/24
+
+
+VLAN 30 - Dispatch Coordination
+  Subnet:        192.168.30.0/24
+
+VLAN 40 - Inventory Management
+  Subnet:        192.168.40.0/24
+
+
+VLAN 50 - IT/Network Operations
+  Subnet:        192.168.50.0/24
+
+
+VLAN 60 - Accounting/Finance
+  Subnet:        192.168.60.0/24
+
+
+VLAN 70 - Quality Control
+  Subnet:        192.168.70.0/24
+
+
+VLAN 80 - Driver/Field Staff Support
+  Subnet:        192.168.80.0/24
+
+
+VLAN 99 - Management/Administrative Network
+  Subnet:        192.168.99.0/24
+
+
+VLAN 150 - Voice VLAN (IP Telephony)
+  Subnet:        192.168.150.0/24
+
+
+
+MAIN BRANCH (HQ) - Base: 2001:DB8:A::/48
+--------------------------------------------------------------------------------
+VLAN 10  - Reception              2001:DB8:A:10::/64
+VLAN 20  - Administration         2001:DB8:A:20::/64
+VLAN 30  - Dispatch               2001:DB8:A:30::/64
+VLAN 40  - Inventory              2001:DB8:A:40::/64
+VLAN 50  - IT/Network Ops         2001:DB8:A:50::/64
+VLAN 60  - Accounting             2001:DB8:A:60::/64
+VLAN 70  - Quality Control        2001:DB8:A:70::/64
+VLAN 80  - Driver Support         2001:DB8:A:80::/64
+VLAN 99  - Management             2001:DB8:A:99::/64
+VLAN 150 - Voice                  2001:DB8:A:150::/64
+VLAN 200 - Servers                2001:DB8:A:200::/64
