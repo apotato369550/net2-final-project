@@ -1,311 +1,293 @@
 # Networking Finals Project - Conversation Summary
 
-**Date**: 2025-12-04
+**Date**: 2025-12-04 (Updated)
 
-## Overview
-This conversation involved configuring a multi-branch network infrastructure for Kamote Korporation with dual ISP connections (PLDT and Globe), HSRP redundancy, IPv4/IPv6 addressing, and OSPF routing.
-
----
-
-## Tasks Completed
-
-### 1. IPv6 SLAAC Configuration
-**File Created**: `dump/ipv6_slaac_commands.txt`
-
-- Configured IPv6 SLAAC (Stateless Address Autoconfiguration) for router subinterfaces
-- Enabled `ipv6 unicast-routing` globally
-- Configured IPv6 addresses and Router Advertisements for VLANs:
-  - VLAN 10: 2001:DB8:B:10::/64
-  - VLAN 20: 2001:DB8:B:20::/64
-  - VLAN 30: 2001:DB8:B:30::/64
-  - VLAN 99: 2001:DB8:B:99::/64
-  - VLAN 150: 2001:DB8:B:150::/64
-- Used commands: `ipv6 address`, `ipv6 nd prefix`, `no ipv6 nd suppress-ra`
+## Project Overview
+Multi-branch network infrastructure for **Kamote Korporation** (logistics company) with:
+- **Main Branch**: Cebu City, Banilad (8 departments, 2 MLS, 2 EdgeRouters)
+- **Branch 1**: Mandaue City, Talamban (3 departments)
+- **Branch 2**: Lapu-Lapu City, Basak (3 departments)
+- **Dual ISPs**: PLDT (AS 200) and Globe (AS 100)
+- **Routing**: OSPF in main branch, EIGRP for inter-branch/ISP communication
+- **IP Telephony**: Inter-branch calling system
 
 ---
 
-### 2. EtherChannel Trunk Fix
-**File Created**: `dump/etherchannel_trunk_fix.txt`
+## Recent Session Tasks (Current)
 
-**Problem Identified**: Port-channels appeared in `show etherchannel summary` but NOT in `show interfaces trunk`
+### 1. OSPF Configuration Fixes
+**File**: `dump/ospf_configuration.txt`
 
-**Root Cause**: Port-channel interfaces were missing `switchport trunk encapsulation dot1q` command
+**Major Changes**:
+- **ISP connections moved to Area 0** (from Area 1/2)
+- Fixed MLS2 interface from `fa0/1` → `GigabitEthernet0/1`
+- Added network statements with wildcard masks
+- Added EIGRP redistribution on EdgeRouters
+- Removed unsupported Packet Tracer commands (`metric-type`, `always`, `summary-address` in OSPF)
 
-**Solution**: Added proper encapsulation configuration to all 4 Port-channels:
-```
-interface Port-channel1
-switchport trunk encapsulation dot1q
-switchport trunk native vlan 99
-switchport trunk allowed vlan 1-1000
-switchport mode trunk
-```
+**Final OSPF Area Design**:
+- **Area 0**: VLANs 99, 150 + ISP connections (192.168.200.0/30, 192.168.201.0/30)
+- **Area 1**: VLANs 10, 20, 30, 40
+- **Area 2**: VLANs 50, 60
+- **Area 3**: VLANs 70, 80
 
-**Key Learning**: On Cisco Multilayer Switches, trunk encapsulation MUST be set BEFORE switchport mode trunk.
-
----
-
-### 3. MLS2 Configuration
-**File Created**: `dump/mls2_commands.txt`
-
-- Created configuration for second Multilayer Switch (MLS2)
-- **Key Difference from MLS1**: NO access ports, only trunk ports and port-channels
-- Removed access port configurations (Fa0/1-3)
-- Included pre-applied EtherChannel trunk fix
-- Configured Gi0/1 as routed port (`no switchport`) for edge router connection
-- 4 Port-channels for redundant inter-switch connections
-- Same security settings as MLS1 (SSH, passwords, banners)
+**EdgeRouter Redistribution**:
+- **EdgeRouter1 (PLDT)**: EIGRP AS 200 ↔ OSPF
+- **EdgeRouter2 (Globe)**: EIGRP AS 100 ↔ OSPF
+- Summary route: `192.168.0.0/16` advertised into EIGRP
 
 ---
 
-### 4. SVI and HSRP Configuration (IPv4 + IPv6)
-**File Created**: `dump/mls_svi_hsrp_ipv4_ipv6_commands.txt`
+### 2. EIGRP ISP & Branch Configuration
+**File**: `dump/eigrp_isp_branch_config.txt`
 
-**IP Addressing Scheme**:
+**ISP Topology**:
+- **PLDT ISP**: AS 200 (2 routers)
+  - Router 1 ↔ Main EdgeRouter1: `11.11.11.0/30`
+  - Router 1 ↔ Router 2: `15.15.15.0/30`
+  - Router 2 ↔ Branch 2: `13.13.13.0/30`
+- **Globe ISP**: AS 100 (2 routers)
+  - Router 1 ↔ Main EdgeRouter2: `10.10.10.0/30`
+  - Router 1 ↔ Router 2: `14.14.14.0/30`
+  - Router 2 ↔ Branch 1: `12.12.12.0/30`
 
-**VLAN 99 Device Assignments**:
-- .1 = Virtual IP (HSRP)
-- .2 = MLS1 (Primary/Active)
-- .3 = MLS2 (Backup/Standby)
-- .4 = DHCP/DNS Server
-- .5 = HTTP Server
-- .6-.12 = 7 Managed Switches
-- .13 = Edge Router 1
-- .14 = Edge Router 2
+**Branch Networks**:
+- **Branch 1**: 100.100.x.0/24 (EIGRP AS 100, connected to Globe)
+- **Branch 2**: 200.200.x.0/24 (EIGRP AS 200, connected to PLDT)
 
-**Data VLANs (10, 20, 30, 40, 50, 60, 70, 80, 150)**:
-- .1 = Virtual IP (HSRP gateway)
-- .2 = MLS1 SVI
-- .3 = MLS2 SVI
-- .4+ = DHCP pool
-
-**HSRP Configuration**:
-- MLS1: Priority 110 (Active)
-- MLS2: Priority 100 (Standby)
-- HSRPv2 enabled for IPv6 support
-- Preempt enabled on both routers
-- Virtual IPs configured for both IPv4 and IPv6
-
-**IPv6 Configuration**:
-- IPv6 addresses assigned to all SVIs
-- IPv6 SLAAC enabled with Router Advertisements
-- IPv6 HSRP virtual addresses configured
-- Base network: 2001:DB8:A::/48
-
-**IP Helper Configuration**:
-- All data VLAN SVIs configured with `ip helper-address 192.168.99.4`
-- Points to DHCP/DNS server for DHCP relay
-
-**VLANs Configured**:
-- VLAN 10, 20, 30, 40, 50, 60, 70, 80, 99, 150
+**Configuration Includes**:
+- Full interface configs with IP addresses
+- EIGRP network statements with wildcard masks
+- Summary routes (100.100.0.0/16, 200.200.0.0/16)
+- Interface configs for Main EdgeRouters
 
 ---
 
-### 5. OSPF Multi-Area Configuration
-**File Created**: `dump/ospf_configuration.txt`
+### 3. IP Telephony Configuration
+**File**: `dump/dial_peer_configuration.txt`
 
-**Final Area Design**:
+**Extension Numbering Plan**:
+- **Main Branch**: 1010-1027 (16 phones)
+- **Branch 1**: 1110, 1120, 1130 (3 phones)
+- **Branch 2**: 1210, 1220, 1230 (3 phones)
 
-**Area 0 (Backbone)**:
-- VLAN 99 (Management)
-- VLAN 150 (Voice)
-- Rationale: Voice in Area 0 allows reachability to EdgeRouters for telephony DHCP services
+**Dial-Peer Patterns**:
+- Main: `10[1-2].`
+- Branch 1: `11[1-3]0`
+- Branch 2: `12[1-3]0`
 
-**Area 1**:
-- VLANs 10, 20, 30, 40
-- MLS1 → EdgeRouter1 (PLDT) connection: 192.168.200.0/30
-- Primary internet path
+**Key Configuration Details**:
+- **Main EdgeRouter1 (PLDT)**: ONLY telephony server (ip source-address 192.168.150.1)
+- **Main EdgeRouter2 (Globe)**: Routes calls only, NO telephony service
+- **Branch 1**: Calls route to `10.10.10.1` (EdgeRouter2 WAN IP)
+- **Branch 2**: Calls route to `11.11.11.1` (EdgeRouter1 WAN IP)
+- **Codec commands removed** (not supported in Packet Tracer)
 
-**Area 2**:
-- VLANs 50, 60
-- MLS2 → EdgeRouter2 (Globe) connection: 192.168.201.0/30
-- Secondary internet path (metric 10)
+**Telephony Issues Debugged**:
+- Branch phones not receiving numbers → Missing button assignments
+- Wrong DHCP option 150 IP
+- Session target mismatches (branches pointing to unreachable IPs)
+- Main can call branches, but branches can't call main → Fixed by pointing to EdgeRouter WAN IPs
 
-**Area 3**:
-- VLANs 70, 80
-
-**Key Design Points**:
-- MLS1 and MLS2 act as ABRs (Area Border Routers) for all areas
-- EdgeRouter1 and EdgeRouter2 act as ASBRs (Autonomous System Boundary Routers)
-- Dual ISP redundancy: PLDT primary, Globe backup
-- OSPF Router IDs: MLS1=1.1.1.1, MLS2=2.2.2.2, ER1=10.10.10.1, ER2=20.20.20.2
-- Default route redistribution configured on both edge routers
-- Passive interfaces recommended on end-user VLANs for security
-
-**Configuration Method**: Used `ip ospf 1 area X` on each interface for clean area assignment
+**Current Issue**:
+- Branch 2 → Main calls still failing
+- EdgeRouter1 telephony service IP mismatch (listening on `192.168.200.2` instead of `192.168.150.1`)
+- Need to verify EdgeRouter1 has interface in voice VLAN or can reach it
 
 ---
 
-## Network Topology Summary
+## Network Addressing Scheme
+
+### Main Branch
+- **VLANs**: 10, 20, 30, 40, 50, 60, 70, 80, 99, 150
+- **Subnetting**: 192.168.x.0/24 (where x = VLAN ID)
+- **HSRP Virtual IPs**: .1 (all VLANs)
+- **MLS1 IPs**: .2 (all VLANs)
+- **MLS2 IPs**: .3 (all VLANs)
+- **EdgeRouter Links**:
+  - MLS1 ↔ ER1: 192.168.200.0/30
+  - MLS2 ↔ ER2: 192.168.201.0/30
+
+### Branch 1 (Mandaue)
+- **VLANs**: 10, 30, 40, 70, 99, 150
+- **Subnetting**: 100.100.x.0/24
+- **ISP Link**: 12.12.12.0/30 (to Globe)
+
+### Branch 2 (Lapu-Lapu)
+- **VLANs**: 10, 20, 30, 40, 70, 99, 150
+- **Subnetting**: 200.200.x.0/24
+- **ISP Link**: 13.13.13.0/30 (to PLDT)
+
+---
+
+## Routing Protocol Architecture
 
 ```
-                    [Internet]
-                         |
-         +---------------+----------------+
-         |                                |
-    [ISP PLDT]                       [ISP Globe]
-         |                                |
-  [EdgeRouter1]                    [EdgeRouter2]
-  192.168.200.2                    192.168.201.2
-  Area 1 ASBR                      Area 2 ASBR
-         |                                |
-  192.168.200.1                    192.168.201.1
-      [MLS1]                            [MLS2]
-   ABR (All Areas)                   ABR (All Areas)
-   HSRP Pri 110                      HSRP Pri 100
-         |                                |
-         +----------[Area 0]--------------+
-                (VLANs 99, 150)
-                      |
-    +-----------------+-----------------+
-    |                 |                 |
-  Area 1            Area 2            Area 3
-(VLANs 10-40)    (VLANs 50-60)     (VLANs 70-80)
+Main Branch (OSPF Process 1)
+├─ Area 0: Management, Voice, ISP connections
+├─ Area 1: VLANs 10-40
+├─ Area 2: VLANs 50-60
+└─ Area 3: VLANs 70-80
+
+EdgeRouter1 (ASBR): OSPF ↔ EIGRP AS 200
+EdgeRouter2 (ASBR): OSPF ↔ EIGRP AS 100
+
+PLDT ISP (EIGRP AS 200)
+├─ Router 1 ↔ Router 2
+├─ Router 1 ↔ Main EdgeRouter1
+└─ Router 2 ↔ Branch 2
+
+Globe ISP (EIGRP AS 100)
+├─ Router 1 ↔ Router 2
+├─ Router 1 ↔ Main EdgeRouter2
+└─ Router 2 ↔ Branch 1
+
+Branch 1: EIGRP AS 100 (matches Globe)
+Branch 2: EIGRP AS 200 (matches PLDT)
 ```
 
 ---
 
-## Key Technologies Implemented
+## Key Configuration Standards
 
-1. **Router-on-a-Stick**: Subinterfaces with 802.1Q encapsulation
-2. **HSRP**: Hot Standby Router Protocol for gateway redundancy
-3. **OSPF Multi-Area**: 4 areas (0, 1, 2, 3) for logical network separation
-4. **EtherChannel**: Link aggregation with LACP (mode active)
-5. **Dual-Stack**: IPv4 and IPv6 configured throughout
-6. **IPv6 SLAAC**: Stateless autoconfiguration for IPv6 addressing
-7. **VLANs**: 802.1Q trunking with native VLAN 99
-8. **Dual ISP**: Redundant internet connections with automatic failover
+### OSPF
+- **Process ID**: 1
+- **Router IDs**: 1.1.1.1 (MLS1), 2.2.2.2 (MLS2), 10.10.10.1 (ER1), 20.20.20.2 (ER2)
+- **Configuration Method**: `ip ospf 1 area X` on interfaces
+- **Redistribution**: EIGRP routes into OSPF with `subnets` keyword
 
----
+### EIGRP
+- **AS Numbers**: 100 (Globe/Branch1), 200 (PLDT/Branch2)
+- **Network Statements**: With wildcard masks
+- **Summary Routes**: /16 summaries advertised to ISPs
+- **No auto-summary**: Disabled on all routers
 
-## Files Created in /dump
-
-1. `ipv6_slaac_commands.txt` - IPv6 SLAAC configuration
-2. `etherchannel_trunk_fix.txt` - Port-channel trunk diagnosis and fix
-3. `mls2_commands.txt` - MLS2 full configuration
-4. `mls_svi_hsrp_ipv4_ipv6_commands.txt` - SVI, HSRP, IPv4/IPv6 configuration
-5. `ospf_configuration.txt` - Multi-area OSPF configuration
-
----
-
-## Important Notes
-
-### Addressing Scheme Revision
-- Initial proposal had data VLANs using .11 for virtual IP, .12/.13 for MLS SVIs
-- **Changed to**: .1 for virtual IP, .2/.3 for MLS SVIs (simpler, more standard)
-
-### OSPF Area Design Evolution
-- Initially proposed all VLANs in Area 0
-- **Revised to**: Logical separation with Area 0 minimal (VLANs 99, 150 only)
-- **Further revised to**: Area grouping by VLAN ranges (10-40, 50-60, 70-80)
-- **Final design**: Voice VLAN moved to Area 0 for EdgeRouter telephony DHCP access
-
-### Telephony Planning
-- Voice VLAN 150 in Area 0 backbone
-- EdgeRouters will host telephony DHCP services
-- Configuration deferred for future implementation
-- IP helper-address on SVIs can point to EdgeRouter IPs via OSPF
+### Telephony
+- **Voice VLAN**: 150
+- **Extension Format**: 4 digits
+- **Telephony Server**: EdgeRouter1 only
+- **Dial-Peer Protocol**: VoIP
+- **Router Model**: 2811 for branches
 
 ---
 
-## Network Specifications
+## Packet Tracer Limitations Encountered
 
-**Main Branch**: Kamote Korporation HQ - Cebu City, Banilad
-- 2 Multilayer Switches (MLS1, MLS2)
-- 2 Edge Routers (EdgeRouter1, EdgeRouter2)
-- 7 Managed Switches
-- 10 VLANs (8 data + 1 management + 1 voice)
+1. **OSPF Commands Not Supported**:
+   - `metric-type 1` → Removed
+   - `default-information originate always` → Changed to `default-information originate`
+   - `summary-address` in OSPF → Only works in EIGRP
 
-**ISP Connections**:
-- PLDT via EdgeRouter1 (Primary)
-- Globe via EdgeRouter2 (Backup, metric 10)
+2. **VoIP Commands Not Supported**:
+   - `codec g711ulaw` → Removed (auto-selected)
+   - `no vad` → Removed
 
-**Inter-MLS Links**:
-- 192.168.200.0/30 (MLS1 ↔ EdgeRouter1)
-- 192.168.201.0/30 (MLS2 ↔ EdgeRouter2)
+3. **Interface Naming**:
+   - MLS devices use GigabitEthernet, not FastEthernet for uplinks
+   - Must use `no switchport` to make MLS interfaces routed
 
-**Base Networks**:
-- IPv4: 192.168.0.0/16
-- IPv6 Main: 2001:DB8:A::/48
-- IPv6 Branch: 2001:DB8:B::/48
+---
+
+## Files Created/Modified
+
+### Configuration Files
+1. `dump/ospf_configuration.txt` - Multi-area OSPF with redistribution
+2. `dump/eigrp_isp_branch_config.txt` - ISP and branch EIGRP configs
+3. `dump/dial_peer_configuration.txt` - Inter-branch telephony dial-peers
+4. `dump/telephony_debug.txt` - Telephony troubleshooting config
+5. `dump/branch_2_config_dump.txt` - Branch 2 router config
+6. `dump/branch_2_telephony.txt` - Branch 2 telephony config
+
+### Addressing Documentation
+1. `addressing/IP_Addressing_and_VLAN_Scheme.txt` - Branch addressing
+2. `addressing/addressing_for_isp.txt` - ISP link addressing
+
+---
+
+## Troubleshooting Notes
+
+### Telephony Issues
+1. **Phones not receiving numbers**:
+   - Missing `button 1:x` assignments on ephones
+   - Missing `auto assign` and `auto-reg-ephone`
+
+2. **DHCP option 150 wrong**:
+   - Should point to router's telephony service IP, not gateway
+
+3. **Inter-branch calling fails**:
+   - Session targets must use routable WAN IPs
+   - Branches point to EdgeRouter WAN IPs, not internal voice VLAN
+
+4. **Main → Branches works, Branches → Main fails**:
+   - Telephony service IP mismatch on EdgeRouter1
+   - Need interface in voice VLAN or proper routing
+
+### Routing Issues
+- Voice VLANs must be advertised in EIGRP
+- Redistribution requires proper metrics in both directions
+- Summary routes reduce routing table size
 
 ---
 
 ## Verification Commands
 
-**HSRP**:
+### EIGRP
 ```
-show standby brief
-show standby vlan 10
-```
-
-**OSPF**:
-```
-show ip ospf neighbor
-show ip route ospf
-show ip ospf interface brief
-show ip ospf
+show ip eigrp neighbors
+show ip eigrp topology
+show ip route eigrp
+show ip protocols
 ```
 
-**EtherChannel**:
+### Telephony
 ```
-show etherchannel summary
-show interfaces trunk
+show telephony-service all
+show ephone registered
+show dial-peer voice summary
+show dialplan number [extension]
+debug voip ccapi inout
 ```
 
-**IPv6**:
+### Connectivity
 ```
-show ipv6 interface brief
-show ipv6 route
+ping [voice-vlan-gateway]
+show ip route [voice-network]
+traceroute [destination]
 ```
 
 ---
 
-## Security Features
+## Next Steps
 
-- SSH version 2 enabled
-- Service password encryption enabled
-- Enable secret configured
-- Console and VTY line passwords
-- VTY 5-15 restricted to SSH with local authentication
-- Banner MOTD: "Authorized Personnel Only!"
-- Port security on access ports (where applicable)
+1. **Fix Branch 2 → Main calling**:
+   - Verify EdgeRouter1 has interface in VLAN 150
+   - Change telephony-service IP to 192.168.150.1
+   - Test end-to-end calling
 
----
+2. **Complete Network Testing**:
+   - Test all inter-branch calls
+   - Verify EIGRP route propagation
+   - Test ISP failover scenarios
+   - Document final topology
 
-## Next Steps / Future Work
-
-1. Configure telephony DHCP on EdgeRouters
-2. Implement IP helper-address for voice VLAN
-3. Configure IP phones on VLAN 150
-4. Test OSPF convergence and failover
-5. Test HSRP failover scenarios
-6. Implement QoS for voice traffic
-7. Configure NAT/PAT on EdgeRouters for internet access
-8. Optional: Implement passive interfaces on SVIs
-9. Optional: Configure area range summarization
+3. **Project Deliverables**:
+   - Packet Tracer .pkt file
+   - Configuration backups
+   - Network documentation
+   - Testing verification screenshots
 
 ---
 
-## Lessons Learned
+## Important Reminders
 
-1. **Port-channel encapsulation order matters**: `switchport trunk encapsulation dot1q` MUST come before `switchport mode trunk`
-2. **OSPF area design**: Minimal Area 0 is more efficient than putting everything in backbone
-3. **Voice VLAN placement**: Placing voice in Area 0 ensures reachability to services across areas
-4. **HSRP + OSPF**: Both technologies work independently; HSRP handles gateway redundancy, OSPF handles routing
-5. **Dual ISP design**: Use OSPF metrics to control default route preference
-
----
-
-## Configuration Standards Used
-
-- Router IDs: Sequential (1.1.1.1, 2.2.2.2, etc.)
-- OSPF Process: 1
-- HSRP Version: 2 (for IPv6 support)
-- VLAN 99: Native VLAN on all trunks
-- EtherChannel mode: Active (LACP)
-- Trunk allowed VLANs: 1-1000
+- **Only EdgeRouter1 hosts telephony** - EdgeRouter2 just routes calls
+- **Dial-peer numbers don't need to match** between routers
+- **Session targets must be routable** via EIGRP/OSPF
+- **Voice VLANs in Area 0** for reachability across all areas
+- **Summary routes reduce** ISP routing table size
+- **EIGRP AS must match** between connected routers
 
 ---
 
 ## End of Summary
-All configurations are copy-pasteable and ready for deployment in Cisco Packet Tracer.
+All configurations documented and ready for final testing and deployment.
