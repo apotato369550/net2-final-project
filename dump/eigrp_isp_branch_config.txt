@@ -1,0 +1,246 @@
+================================================================================
+                    EIGRP CONFIGURATION - ISP & BRANCHES
+================================================================================
+
+================================================================================
+                    PLDT ISP ROUTER 1
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/0
+description Connection to Main EdgeRouter1
+ip address 11.11.11.2 255.255.255.252
+no shutdown
+exit
+
+interface GigabitEthernet0/1
+description Connection to PLDT Router 2
+ip address 15.15.15.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 200
+network 11.11.11.0 0.0.0.3
+network 15.15.15.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    PLDT ISP ROUTER 2
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/0
+description Connection to PLDT Router 1
+ip address 15.15.15.2 255.255.255.252
+no shutdown
+exit
+
+interface GigabitEthernet0/1
+description Connection to Branch 2
+ip address 13.13.13.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 200
+network 15.15.15.0 0.0.0.3
+network 13.13.13.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    GLOBE ISP ROUTER 1
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/0
+description Connection to Main EdgeRouter2
+ip address 10.10.10.2 255.255.255.252
+no shutdown
+exit
+
+interface GigabitEthernet0/1
+description Connection to Globe Router 2
+ip address 14.14.14.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 100
+network 10.10.10.0 0.0.0.3
+network 14.14.14.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    GLOBE ISP ROUTER 2
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/0
+description Connection to Globe Router 1
+ip address 14.14.14.2 255.255.255.252
+no shutdown
+exit
+
+interface GigabitEthernet0/1
+description Connection to Branch 1
+ip address 12.12.12.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 100
+network 14.14.14.0 0.0.0.3
+network 12.12.12.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    BRANCH 1 ROUTER (MANDAUE - GLOBE ISP)
+================================================================================
+
+enable
+configure terminal
+
+interface FastEthernet0/0
+description Connection to Globe ISP Router 2
+ip address 12.12.12.2 255.255.255.252
+no shutdown
+exit
+
+router eigrp 100
+network 100.100.10.0 0.0.0.255
+network 100.100.30.0 0.0.0.255
+network 100.100.40.0 0.0.0.255
+network 100.100.70.0 0.0.0.255
+network 100.100.99.0 0.0.0.255
+network 100.100.150.0 0.0.0.255
+network 12.12.12.0 0.0.0.3
+no auto-summary
+summary-address 100.100.0.0 255.255.0.0
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    BRANCH 2 ROUTER (LAPU-LAPU - PLDT ISP)
+================================================================================
+
+enable
+configure terminal
+
+interface FastEthernet0/0
+description Connection to PLDT ISP Router 2
+ip address 13.13.13.2 255.255.255.252
+no shutdown
+exit
+
+router eigrp 200
+network 200.200.10.0 0.0.0.255
+network 200.200.30.0 0.0.0.255
+network 200.200.40.0 0.0.0.255
+network 200.200.70.0 0.0.0.255
+network 200.200.99.0 0.0.0.255
+network 200.200.150.0 0.0.0.255
+network 13.13.13.0 0.0.0.3
+no auto-summary
+summary-address 200.200.0.0 255.255.0.0
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    MAIN EDGEROUTER1 (PLDT) - ADD TO EXISTING CONFIG
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/1
+description Connection to PLDT ISP Router 1
+ip address 11.11.11.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 200
+network 11.11.11.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    MAIN EDGEROUTER2 (GLOBE) - ADD TO EXISTING CONFIG
+================================================================================
+
+enable
+configure terminal
+
+interface GigabitEthernet0/1
+description Connection to Globe ISP Router 1
+ip address 10.10.10.1 255.255.255.252
+no shutdown
+exit
+
+router eigrp 100
+network 10.10.10.0 0.0.0.3
+no auto-summary
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+show ip eigrp neighbors
+show ip eigrp topology
+show ip route eigrp
+show ip eigrp topology all-links
+
+================================================================================
+                    NETWORK SUMMARY
+================================================================================
+
+PLDT ISP Network (AS 200):
+- 11.11.11.0/30 (PLDT R1 <-> Main EdgeRouter1)
+- 15.15.15.0/30 (PLDT R1 <-> PLDT R2)
+- 13.13.13.0/30 (PLDT R2 <-> Branch 2)
+
+Globe ISP Network (AS 100):
+- 10.10.10.0/30 (Globe R1 <-> Main EdgeRouter2)
+- 14.14.14.0/30 (Globe R1 <-> Globe R2)
+- 12.12.12.0/30 (Globe R2 <-> Branch 1)
+
+Branch 1 (AS 100):
+- Summarized as 100.100.0.0/16
+- Connected to Globe ISP (AS 100)
+
+Branch 2 (AS 200):
+- Summarized as 200.200.0.0/16
+- Connected to PLDT ISP (AS 200)
+
+================================================================================
