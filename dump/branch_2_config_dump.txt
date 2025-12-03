@@ -1,0 +1,156 @@
+Current configuration : 2257 bytes
+!
+version 15.1
+no service timestamps log datetime msec
+no service timestamps debug datetime msec
+service password-encryption
+!
+hostname Branch2Router
+!
+!
+!
+enable secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+!
+ip dhcp excluded-address 200.200.150.1 200.200.150.10
+!
+ip dhcp pool Voice
+ network 200.200.150.0 255.255.255.0
+ default-router 200.200.150.1
+ option 150 ip 200.200.150.1
+!
+!
+!
+ip cef
+ipv6 unicast-routing
+!
+no ipv6 cef
+!
+!
+!
+username admin secret 5 $1$mERr$hx5rVt7rPNoS4wqbXKX7m0
+!
+!
+license udi pid CISCO2811/K9 sn FTX1017EIUU-
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+!
+ip ssh version 2
+ip domain-name cisco.com
+!
+!
+spanning-tree mode pvst
+!
+!
+!
+!
+!
+!
+interface FastEthernet0/0
+ no ip address
+ duplex auto
+ speed auto
+ shutdown
+!
+interface FastEthernet0/1
+ no ip address
+ duplex auto
+ speed auto
+!
+interface FastEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 200.200.10.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:10::1/64
+!
+interface FastEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 200.200.20.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:20::1/64
+!
+interface FastEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 200.200.30.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:30::1/64
+!
+interface FastEthernet0/1.99
+ encapsulation dot1Q 99 native
+ ip address 200.200.99.1 255.255.255.0
+ ipv6 address 2001:DB8:C:99::1/64
+!
+interface FastEthernet0/1.150
+ encapsulation dot1Q 150
+ ip address 200.200.150.1 255.255.255.0
+ ipv6 address 2001:DB8:C:150::1/64
+!
+interface Vlan1
+ no ip address
+ shutdown
+!
+ip classless
+!
+ip flow-export version 9
+!
+!
+!
+banner motd ^CAuthorized Personnel Only!^C
+!
+!
+!
+!
+telephony-service
+ max-ephones 3
+ max-dn 3
+ ip source-address 200.200.150.1 port 2000
+!
+ephone-dn 1
+ number 1210
+!
+ephone-dn 2
+ number 1220
+!
+ephone-dn 3
+ number 1230
+!
+ephone 1
+ device-security-mode none
+ mac-address 0003.E4C6.7C88
+ type 7960
+!
+ephone 2
+ device-security-mode none
+ mac-address 00D0.D3CE.5898
+ type 7960
+!
+ephone 3
+ device-security-mode none
+ mac-address 00E0.F90A.1A76
+ type 7960
+!
+line con 0
+ password 7 0822455D0A16
+ login
+!
+line aux 0
+!
+line vty 0 4
+ password 7 0822455D0A16
+ login
+ transport input telnet
+line vty 5 15
+ login local
+ transport input ssh
+!
+!
+!
+end

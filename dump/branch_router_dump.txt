@@ -1,0 +1,62 @@
+interface FastEthernet0/1.10
+ encapsulation dot1Q 10
+ ip address 200.200.10.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:10::1/64
+!
+interface FastEthernet0/1.20
+ encapsulation dot1Q 20
+ ip address 200.200.20.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:20::1/64
+!
+interface FastEthernet0/1.30
+ encapsulation dot1Q 30
+ ip address 200.200.30.1 255.255.255.0
+ ip helper-address 200.200.99.2
+ ipv6 address 2001:DB8:C:30::1/64
+!
+interface FastEthernet0/1.99
+ encapsulation dot1Q 99 native
+ ip address 200.200.99.1 255.255.255.0
+ ipv6 address 2001:DB8:C:99::1/64
+!
+interface FastEthernet0/1.150
+ encapsulation dot1Q 150
+ ip address 200.200.150.1 255.255.255.0
+ ipv6 address 2001:DB8:C:150::1/64
+!
+
+ip dhcp excluded-address 200.200.150.1 200.200.150.10
+!
+ip dhcp pool Voice
+ network 200.200.150.0 255.255.255.0
+ default-router 200.200.150.1
+ option 150 ip 200.200.150.1
+
+ 
+ telephony-service
+ max-ephones 3
+ max-dn 3
+ ip source-address 200.200.150.1 port 2000
+!
+ephone-dn 1
+ number 1210
+!
+ephone-dn 2
+ number 1220
+!
+ephone-dn 3
+ number 1230
+!
+ephone 1
+ type 7960
+ button 1:1
+!
+ephone 2
+ type 7960
+ button 1:2
+!
+ephone 3
+ type 7960
+ button 1:3
