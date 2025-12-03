@@ -1,0 +1,114 @@
+================================================================================
+                    ROUTER CONFIGURATION COMMANDS
+================================================================================
+Username: admin
+Password: cisco
+
+--------------------------------------------------------------------------------
+                    BASIC CONFIGURATION
+--------------------------------------------------------------------------------
+enable
+configure terminal
+hostname Branch1Router
+enable secret cisco
+service password-encryption
+ip domain-name cisco.com
+ip ssh version 2
+username admin secret cisco
+banner motd ^CAuthorized Personnel Only!^C
+exit
+
+--------------------------------------------------------------------------------
+                    DHCP CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+ip dhcp excluded-address 100.100.150.1 100.100.150.10
+ip dhcp pool Voice
+network 100.100.150.0 255.255.255.0
+option 150 ip 100.100.150.1
+exit
+ip dhcp pool voice
+default-router 100.100.150.1
+exit
+exit
+
+--------------------------------------------------------------------------------
+                    INTERFACE CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+interface fa0/0
+shutdown
+exit
+
+interface fa0/1
+no shutdown
+exit
+
+interface fa0/1.10
+encapsulation dot1Q 10
+ip address 100.100.10.1 255.255.255.0
+ip helper-address 100.100.99.2
+exit
+
+interface fa0/1.20
+encapsulation dot1Q 20
+ip address 100.100.20.1 255.255.255.0
+ip helper-address 100.100.99.2
+exit
+
+interface fa0/1.30
+encapsulation dot1Q 30
+ip address 100.100.30.1 255.255.255.0
+ip helper-address 100.100.99.2
+exit
+
+interface fa0/1.99
+encapsulation dot1Q 99 native
+ip address 100.100.99.1 255.255.255.0
+exit
+
+interface fa0/1.150
+encapsulation dot1Q 150
+ip address 100.100.150.1 255.255.255.0
+ip helper-address 100.100.99.2
+exit
+
+interface fa0/2
+shutdown
+exit
+
+interface Vlan1
+shutdown
+exit
+exit
+
+--------------------------------------------------------------------------------
+                    LINE CONFIGURATION
+--------------------------------------------------------------------------------
+configure terminal
+line con 0
+password cisco
+login
+exit
+
+line vty 0 4
+password cisco
+login
+transport input telnet
+exit
+
+line vty 5 15
+login local
+transport input ssh
+exit
+exit
+
+--------------------------------------------------------------------------------
+                    SAVE CONFIGURATION
+--------------------------------------------------------------------------------
+copy running-config startup-config
+(Press Enter to confirm)
+
+================================================================================
+END OF COMMANDS
+================================================================================
