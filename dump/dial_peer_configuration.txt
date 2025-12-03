@@ -1,0 +1,249 @@
+================================================================================
+                    DIAL-PEER CONFIGURATION FOR INTER-BRANCH TELEPHONY
+================================================================================
+
+================================================================================
+                    MAIN EDGEROUTER1 (GLOBE) - DIAL-PEERS
+================================================================================
+
+enable
+configure terminal
+
+! Dial-peer for calls TO Branch 1 (via Globe ISP)
+! Branch 1 extensions: 1210, 1220, 1230 (pattern 12..)
+dial-peer voice 100 voip
+ description Calls to Branch 1 Mandaue
+ destination-pattern 12..
+ session target ipv4:100.100.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Dial-peer for local calls within Main Branch
+dial-peer voice 1000 voip
+ description Local Main Branch Calls
+ destination-pattern 1[0-9][0-9][0-9]
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    MAIN EDGEROUTER2 (PLDT) - DIAL-PEERS
+================================================================================
+
+enable
+configure terminal
+
+! Dial-peer for calls TO Branch 2 (via PLDT ISP)
+! Branch 2 extensions: 1210, 1220, 1230 (pattern 13..)
+dial-peer voice 200 voip
+ description Calls to Branch 2 Lapu-Lapu
+ destination-pattern 13..
+ session target ipv4:200.200.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Dial-peer for local calls within Main Branch
+dial-peer voice 1000 voip
+ description Local Main Branch Calls
+ destination-pattern 1[0-9][0-9][0-9]
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    BRANCH 1 ROUTER (MANDAUE) - DIAL-PEERS
+================================================================================
+
+enable
+configure terminal
+
+! Dial-peer for calls TO Main Branch
+! Main extensions: 1000-1999 (pattern 1...)
+dial-peer voice 1 voip
+ description Calls to Main Branch HQ
+ destination-pattern 1[0-9][0-9][0-9]
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Dial-peer for calls TO Branch 2 (route via Main)
+! Branch 2 extensions: 1310, 1320, 1330
+dial-peer voice 2 voip
+ description Calls to Branch 2 via Main
+ destination-pattern 13..
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Local dial-peer for Branch 1 internal calls
+dial-peer voice 100 voip
+ description Local Branch 1 Calls
+ destination-pattern 12..
+ session target ipv4:100.100.150.1
+ codec g711ulaw
+ no vad
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    BRANCH 2 ROUTER (LAPU-LAPU) - DIAL-PEERS
+================================================================================
+
+enable
+configure terminal
+
+! Dial-peer for calls TO Main Branch
+! Main extensions: 1000-1999 (pattern 1...)
+dial-peer voice 1 voip
+ description Calls to Main Branch HQ
+ destination-pattern 1[0-9][0-9][0-9]
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Dial-peer for calls TO Branch 1 (route via Main)
+! Branch 1 extensions: 1210, 1220, 1230
+dial-peer voice 2 voip
+ description Calls to Branch 1 via Main
+ destination-pattern 12..
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+ no vad
+exit
+
+! Local dial-peer for Branch 2 internal calls
+dial-peer voice 200 voip
+ description Local Branch 2 Calls
+ destination-pattern 13..
+ session target ipv4:200.200.150.1
+ codec g711ulaw
+ no vad
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    EXTENSION NUMBERING PLAN
+================================================================================
+
+Main Branch HQ (Cebu City, Banilad):
+- Reception: 1010, 1011
+- Administration: 1020, 1021
+- Dispatch: 1030, 1031
+- Inventory: 1040, 1041
+- IT/NOC: 1050, 1051
+- Accounting: 1060, 1061
+- QC: 1070, 1071
+- Driver Support: 1080, 1081
+
+Branch 1 (Mandaue City, Talamban):
+- Reception: 1210
+- Inventory: 1220
+- Dispatch: 1230
+
+Branch 2 (Lapu-Lapu City, Basak):
+- Reception: 1310
+- Inventory: 1320
+- Dispatch: 1330
+
+Pattern Breakdown:
+- 1... = Main Branch (1000-1999)
+- 12.. = Branch 1 (1200-1299)
+- 13.. = Branch 2 (1300-1399)
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+! Check dial-peers configured
+show dial-peer voice summary
+
+! Check specific dial-peer
+show dial-peer voice 100
+
+! Test call routing (without actually calling)
+show dialplan number 1210
+show dialplan number 1050
+show dialplan number 1310
+
+! Debug call setup
+debug voip ccapi inout
+debug dial-peer
+
+! Check telephony service status
+show telephony-service all
+show ephone registered
+
+! Make test call from phone and check:
+debug ephone detail
+
+================================================================================
+                    TROUBLESHOOTING NOTES
+================================================================================
+
+If calls still don't work:
+
+1. Verify voice VLAN routing:
+   - ping 192.168.150.1 from Branch 1 router
+   - ping 100.100.150.1 from Main router
+   - ping 200.200.150.1 from Main router
+
+2. Check EIGRP routes include voice VLANs:
+   - show ip route 192.168.150.0
+   - show ip route 100.100.150.0
+   - show ip route 200.200.150.0
+
+3. Verify phones are registered:
+   - show ephone (on each router)
+
+4. Check dial-peer matching:
+   - show dialplan number [extension]
+
+5. If using NAT, ensure voice traffic bypasses NAT:
+   - access-list 100 deny ip 192.168.150.0 0.0.0.255 any
+   - (Add similar for all voice VLANs)
+
+6. Codec mismatch:
+   - Ensure all dial-peers use same codec (g711ulaw)
+
+7. Session targets must be reachable:
+   - Each session target IP must be pingable
+   - Voice VLANs must be in EIGRP/OSPF routing
+
+================================================================================
+                    ALTERNATIVE: SIMPLER DIAL-PEER (IF ABOVE FAILS)
+================================================================================
+
+If the above doesn't work, try catch-all dial-peers:
+
+MAIN EDGEROUTER1:
+dial-peer voice 9999 voip
+ destination-pattern .T
+ session target ipv4:100.100.150.1
+ codec g711ulaw
+
+BRANCH 1:
+dial-peer voice 9999 voip
+ destination-pattern .T
+ session target ipv4:192.168.150.1
+ codec g711ulaw
+
+(This routes ALL non-local calls to the target, less specific but works)
+
+================================================================================

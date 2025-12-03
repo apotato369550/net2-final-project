@@ -9,13 +9,13 @@
 enable
 configure terminal
 
-interface GigabitEthernet0/0
+interface GigabitEthernet0/1
 description Connection to Main EdgeRouter1
 ip address 11.11.11.2 255.255.255.252
 no shutdown
 exit
 
-interface GigabitEthernet0/1
+interface GigabitEthernet0/0
 description Connection to PLDT Router 2
 ip address 15.15.15.1 255.255.255.252
 no shutdown
@@ -65,13 +65,13 @@ copy running-config startup-config
 enable
 configure terminal
 
-interface GigabitEthernet0/0
+interface GigabitEthernet0/1
 description Connection to Main EdgeRouter2
 ip address 10.10.10.2 255.255.255.252
 no shutdown
 exit
 
-interface GigabitEthernet0/1
+interface GigabitEthernet0/0
 description Connection to Globe Router 2
 ip address 14.14.14.1 255.255.255.252
 no shutdown
@@ -171,42 +171,63 @@ exit
 copy running-config startup-config
 
 ================================================================================
-                    MAIN EDGEROUTER1 (PLDT) - ADD TO EXISTING CONFIG
+                    MAIN EDGEROUTER1 (GLOBE) - FIX EXISTING CONFIG
 ================================================================================
 
 enable
 configure terminal
 
-interface GigabitEthernet0/1
-description Connection to PLDT ISP Router 1
-ip address 11.11.11.1 255.255.255.252
-no shutdown
+! Remove wrong EIGRP AS 200
+no router eigrp 200
+
+! Fix OSPF - remove wrong redistribution
+router ospf 1
+no redistribute eigrp 200
 exit
 
-router eigrp 200
-network 11.11.11.0 0.0.0.3
+! Configure correct EIGRP AS 100 for Globe
+router eigrp 100
+network 10.10.10.0 0.0.0.3
 no auto-summary
+redistribute ospf 1 metric 10000 100 255 1 1500
+summary-address 192.168.0.0 255.255.0.0
 exit
+
+! Fix OSPF redistribution to use EIGRP 100
+router ospf 1
+redistribute eigrp 100 subnets
+exit
+
 
 exit
 copy running-config startup-config
 
 ================================================================================
-                    MAIN EDGEROUTER2 (GLOBE) - ADD TO EXISTING CONFIG
+                    MAIN EDGEROUTER2 (PLDT) - FIX EXISTING CONFIG
 ================================================================================
 
 enable
 configure terminal
 
-interface GigabitEthernet0/1
-description Connection to Globe ISP Router 1
-ip address 10.10.10.1 255.255.255.252
-no shutdown
+! Remove wrong EIGRP AS 100
+no router eigrp 100
+
+! Fix OSPF - remove wrong redistribution
+router ospf 1
+no redistribute eigrp 100
 exit
 
-router eigrp 100
-network 10.10.10.0 0.0.0.3
+! Configure correct EIGRP AS 200 for PLDT
+router eigrp 200
+network 11.11.11.0 0.0.0.3
 no auto-summary
+redistribute ospf 1 metric 10000 100 255 1 1500
+summary-address 192.168.0.0 255.255.0.0
+exit
+
+! Fix OSPF redistribution to use EIGRP 200
+router ospf 1
+redistribute eigrp 200 subnets metric 10
 exit
 
 exit
