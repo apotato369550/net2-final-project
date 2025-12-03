@@ -2,30 +2,68 @@
                     OSPF AREA CONFIGURATION
 ================================================================================
 
-TOPOLOGY:
----------
-Area 1: MLS1 ←→ EdgeRouter1 (192.168.200.0/30)
-Area 0: Internal Campus (All VLANs + MLS1 ↔ MLS2)
-Area 2: MLS2 ←→ EdgeRouter2 (192.168.201.0/30)
+TOPOLOGY & AREA DESIGN:
+-----------------------
+Area 0 (Backbone): Management & Voice Infrastructure
+  - VLAN 99
+  - VLAN 150
+  - Inter-MLS communication
+  - Core routing backbone
 
-MLS1 and MLS2 = ABRs (Area Border Routers)
-EdgeRouter1 and EdgeRouter2 = ASBR candidates (if connecting to ISP/external networks)
+Area 1: First VLAN Group
+  - VLAN 10
+  - VLAN 20
+  - VLAN 30
+  - VLAN 40
+  - Connection: MLS1 ←→ EdgeRouter1 (PLDT) - 192.168.200.0/30
+
+Area 2: Second VLAN Group
+  - VLAN 50
+  - VLAN 60
+  - Connection: MLS2 ←→ EdgeRouter2 (Globe) - 192.168.201.0/30
+
+Area 3: Third VLAN Group
+  - VLAN 70
+  - VLAN 80
+
+RATIONALE:
+----------
+- Area 0: Core backbone with management and voice (allows voice DHCP from EdgeRouters)
+- Area 1: VLANs 10-40 + PLDT connection
+- Area 2: VLANs 50-60 + Globe connection
+- Area 3: VLANs 70-80
+- Voice VLAN in Area 0 ensures reachability to EdgeRouters for DHCP/telephony services
+
+MLS1 and MLS2 = ABRs (Area Border Routers) connecting all areas to Area 0
+EdgeRouter1 (PLDT) and EdgeRouter2 (Globe) = ASBRs (Autonomous System Boundary Routers)
 
 INTERFACE ASSIGNMENTS:
 ----------------------
 MLS1:
-  - Gi0/1 (to EdgeRouter1): 192.168.200.1/30 → Area 1
-  - All SVIs (VLAN 10-150): → Area 0
+  - Gi0/1 (to EdgeRouter1/PLDT): 192.168.200.1/30 → Area 1
+  - VLAN 99: → Area 0
+  - VLAN 150: → Area 0
+  - VLAN 10, 20, 30, 40: → Area 1
+  - VLAN 50, 60: → Area 2
+  - VLAN 70, 80: → Area 3
 
 MLS2:
-  - Gi0/1 (to EdgeRouter2): 192.168.201.1/30 → Area 2
-  - All SVIs (VLAN 10-150): → Area 0
+  - Gi0/1 (to EdgeRouter2/Globe): 192.168.201.1/30 → Area 2
+  - VLAN 99: → Area 0
+  - VLAN 150: → Area 0
+  - VLAN 10, 20, 30, 40: → Area 1
+  - VLAN 50, 60: → Area 2
+  - VLAN 70, 80: → Area 3
 
-EdgeRouter1:
+EdgeRouter1 (PLDT):
   - Interface to MLS1: 192.168.200.2/30 → Area 1
+  - Interface to ISP PLDT: Default route redistribution into OSPF
+  - Can host telephony DHCP services (reachable via Area 0)
 
-EdgeRouter2:
+EdgeRouter2 (Globe):
   - Interface to MLS2: 192.168.201.2/30 → Area 2
+  - Interface to ISP Globe: Default route redistribution into OSPF
+  - Can host telephony DHCP services (reachable via Area 0)
 
 ================================================================================
                     MLS1 OSPF CONFIGURATION
@@ -40,51 +78,72 @@ router-id 1.1.1.1
 log-adjacency-changes
 exit
 
-! Configure Area 1 (External Connection to EdgeRouter1)
-interface GigabitEthernet0/1
-ip ospf 1 area 1
-no shutdown
-exit
-
-! Configure Area 0 (Internal Networks - All SVIs)
-interface vlan 10
-ip ospf 1 area 0
-exit
-
-interface vlan 20
-ip ospf 1 area 0
-exit
-
-interface vlan 30
-ip ospf 1 area 0
-exit
-
-interface vlan 40
-ip ospf 1 area 0
-exit
-
-interface vlan 50
-ip ospf 1 area 0
-exit
-
-interface vlan 60
-ip ospf 1 area 0
-exit
-
-interface vlan 70
-ip ospf 1 area 0
-exit
-
-interface vlan 80
-ip ospf 1 area 0
-exit
-
+! ============================================================================
+!                  AREA 0 - BACKBONE (MANAGEMENT + VOICE)
+! ============================================================================
 interface vlan 99
+description VLAN 99 - Area 0 Backbone
 ip ospf 1 area 0
 exit
 
 interface vlan 150
+description VLAN 150 - Area 0 Backbone
 ip ospf 1 area 0
+exit
+
+! ============================================================================
+!                  AREA 1 - VLANS 10-40 + PLDT CONNECTION
+! ============================================================================
+interface GigabitEthernet0/1
+description Connection to EdgeRouter1 (PLDT)
+ip ospf 1 area 1
+no shutdown
+exit
+
+interface vlan 10
+description VLAN 10 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 20
+description VLAN 20 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 30
+description VLAN 30 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 40
+description VLAN 40 - Area 1
+ip ospf 1 area 1
+exit
+
+! ============================================================================
+!                  AREA 2 - VLANS 50-60
+! ============================================================================
+interface vlan 50
+description VLAN 50 - Area 2
+ip ospf 1 area 2
+exit
+
+interface vlan 60
+description VLAN 60 - Area 2
+ip ospf 1 area 2
+exit
+
+! ============================================================================
+!                  AREA 3 - VLANS 70-80
+! ============================================================================
+interface vlan 70
+description VLAN 70 - Area 3
+ip ospf 1 area 3
+exit
+
+interface vlan 80
+description VLAN 80 - Area 3
+ip ospf 1 area 3
 exit
 
 exit
@@ -103,58 +162,79 @@ router-id 2.2.2.2
 log-adjacency-changes
 exit
 
-! Configure Area 2 (External Connection to EdgeRouter2)
-interface GigabitEthernet0/1
-ip ospf 1 area 2
-no shutdown
-exit
-
-! Configure Area 0 (Internal Networks - All SVIs)
-interface vlan 10
-ip ospf 1 area 0
-exit
-
-interface vlan 20
-ip ospf 1 area 0
-exit
-
-interface vlan 30
-ip ospf 1 area 0
-exit
-
-interface vlan 40
-ip ospf 1 area 0
-exit
-
-interface vlan 50
-ip ospf 1 area 0
-exit
-
-interface vlan 60
-ip ospf 1 area 0
-exit
-
-interface vlan 70
-ip ospf 1 area 0
-exit
-
-interface vlan 80
-ip ospf 1 area 0
-exit
-
+! ============================================================================
+!                  AREA 0 - BACKBONE (MANAGEMENT + VOICE)
+! ============================================================================
 interface vlan 99
+description VLAN 99 - Area 0 Backbone
 ip ospf 1 area 0
 exit
 
 interface vlan 150
+description VLAN 150 - Area 0 Backbone
 ip ospf 1 area 0
+exit
+
+! ============================================================================
+!                  AREA 1 - VLANS 10-40
+! ============================================================================
+interface vlan 10
+description VLAN 10 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 20
+description VLAN 20 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 30
+description VLAN 30 - Area 1
+ip ospf 1 area 1
+exit
+
+interface vlan 40
+description VLAN 40 - Area 1
+ip ospf 1 area 1
+exit
+
+! ============================================================================
+!                  AREA 2 - VLANS 50-60 + GLOBE CONNECTION
+! ============================================================================
+interface GigabitEthernet0/1
+description Connection to EdgeRouter2 (Globe)
+ip ospf 1 area 2
+no shutdown
+exit
+
+interface vlan 50
+description VLAN 50 - Area 2
+ip ospf 1 area 2
+exit
+
+interface vlan 60
+description VLAN 60 - Area 2
+ip ospf 1 area 2
+exit
+
+! ============================================================================
+!                  AREA 3 - VLANS 70-80
+! ============================================================================
+interface vlan 70
+description VLAN 70 - Area 3
+ip ospf 1 area 3
+exit
+
+interface vlan 80
+description VLAN 80 - Area 3
+ip ospf 1 area 3
 exit
 
 exit
 copy running-config startup-config
 
 ================================================================================
-                    EDGEROUTER1 OSPF CONFIGURATION
+                    EDGEROUTER1 (PLDT) OSPF CONFIGURATION
 ================================================================================
 
 enable
@@ -164,20 +244,36 @@ configure terminal
 router ospf 1
 router-id 10.10.10.1
 log-adjacency-changes
+default-information originate always
 exit
 
 ! Configure the interface to MLS1 in Area 1
 ! (Replace with your actual interface name - e.g., Gi0/0, Fa0/0, etc.)
 interface GigabitEthernet0/0
+description Connection to MLS1
+ip address 192.168.200.2 255.255.255.252
 ip ospf 1 area 1
 no shutdown
+exit
+
+! Interface to ISP PLDT (example - adjust as needed)
+! interface GigabitEthernet0/1
+! description Connection to ISP PLDT
+! ip address dhcp (or static from ISP)
+! no shutdown
+! exit
+
+! Redistribute default route into OSPF (for internet access via PLDT)
+! This makes EdgeRouter1 an ASBR
+router ospf 1
+default-information originate always
 exit
 
 exit
 copy running-config startup-config
 
 ================================================================================
-                    EDGEROUTER2 OSPF CONFIGURATION
+                    EDGEROUTER2 (GLOBE) OSPF CONFIGURATION
 ================================================================================
 
 enable
@@ -187,13 +283,30 @@ configure terminal
 router ospf 1
 router-id 20.20.20.2
 log-adjacency-changes
+default-information originate always metric 10
 exit
 
 ! Configure the interface to MLS2 in Area 2
 ! (Replace with your actual interface name - e.g., Gi0/0, Fa0/0, etc.)
 interface GigabitEthernet0/0
+description Connection to MLS2
+ip address 192.168.201.2 255.255.255.252
 ip ospf 1 area 2
 no shutdown
+exit
+
+! Interface to ISP Globe (example - adjust as needed)
+! interface GigabitEthernet0/1
+! description Connection to ISP Globe
+! ip address dhcp (or static from ISP)
+! no shutdown
+! exit
+
+! Redistribute default route into OSPF (for internet access via Globe)
+! This makes EdgeRouter2 an ASBR
+! Use higher metric to prefer PLDT (EdgeRouter1) as primary internet path
+router ospf 1
+default-information originate always metric 10
 exit
 
 exit
@@ -264,30 +377,44 @@ Common issues:
                     NETWORK DIAGRAM
 ================================================================================
 
-                        [Internet/ISP]
+                        [Internet]
                               |
               +---------------+----------------+
               |                                |
+          [ISP PLDT]                      [ISP Globe]
+              |                                |
        [EdgeRouter1]                    [EdgeRouter2]
-       Area 1 ASBR?                     Area 2 ASBR?
+       ASBR - Area 1                    ASBR - Area 2
        192.168.200.2                    192.168.201.2
+       (metric default)                 (metric 10)
               |                                |
               | Area 1                         | Area 2
               | 192.168.200.0/30               | 192.168.201.0/30
               |                                |
        192.168.200.1                    192.168.201.1
           [MLS1]                            [MLS2]
-        ABR (Area 0 + 1)                ABR (Area 0 + 2)
-        Priority 110                     Priority 100
+        ABR (All Areas)                  ABR (All Areas)
+        HSRP Priority 110                HSRP Priority 100
               |                                |
               +----------- Area 0 -------------+
-                    (All VLANs 10-150)
-                    Internal Campus Network
-                    HSRP Active/Standby
+                      (VLAN 99 - Management)
+                              |
+        +---------------------+---------------------+
+        |           |           |                   |
+     Area 1      Area 2      Area 3                 |
+   (VLANs 10-40) (VLANs 50-60) (VLANs 70-80)       |
+        |           |           |                   |
+    VLAN 10     VLAN 50     VLAN 70           Inter-MLS
+    VLAN 20     VLAN 60     VLAN 80         Communication
+    VLAN 30                                   VLAN 150 (Voice)
+    VLAN 40
 
-Area 0: Backbone (all internal VLANs)
-Area 1: MLS1 ↔ EdgeRouter1 connection
-Area 2: MLS2 ↔ EdgeRouter2 connection
+AREA SUMMARY:
+-------------
+Area 0: Backbone - VLANs 99, 150
+Area 1: VLANs 10, 20, 30, 40 + PLDT Edge Connection
+Area 2: VLANs 50, 60 + Globe Edge Connection
+Area 3: VLANs 70, 80
 
 ================================================================================
                     KEY POINTS
@@ -295,55 +422,76 @@ Area 2: MLS2 ↔ EdgeRouter2 connection
 
 Why this design?
 
-1. **Area 0 for internal networks**: All SVIs are in Area 0, forming the backbone
-   - This allows all internal VLANs to communicate efficiently
-   - HSRP works within Area 0 seamlessly
+1. **Area 0 (Backbone) - Management + Voice**:
+   - VLAN 99 for management traffic
+   - VLAN 150 for voice traffic
+   - Voice in Area 0 ensures reachability to EdgeRouters for telephony DHCP
+   - All other areas connect through Area 0 (OSPF requirement)
 
-2. **Area 1 and Area 2 for external connections**:
-   - Isolates external routing from internal
-   - Easier to apply filtering/summarization at ABR
-   - Cleaner separation of concerns
+2. **Area 1 (VLANs 10-40) + PLDT Connection**:
+   - Groups VLANs 10, 20, 30, 40
+   - EdgeRouter1 (PLDT) connects here as ASBR
+   - Primary internet path (lower metric)
 
-3. **MLS1 and MLS2 as ABRs**:
-   - They connect Area 0 to Areas 1 and 2
-   - Can perform route summarization
+3. **Area 2 (VLANs 50-60) + Globe Connection**:
+   - Groups VLANs 50, 60
+   - EdgeRouter2 (Globe) connects here as ASBR
+   - Secondary internet path (higher metric 10)
+
+4. **Area 3 (VLANs 70-80)**:
+   - Groups VLANs 70, 80
+   - Can apply specific policies if needed
+
+5. **MLS1 and MLS2 as Multi-Area ABRs**:
+   - Both routers participate in ALL areas (0, 1, 2, 3)
+   - This provides full redundancy across all areas
+   - Can perform route summarization per area
    - Can filter routes between areas if needed
 
-4. **HSRP compatibility**:
-   - HSRP operates at Layer 3 within Area 0
-   - OSPF will advertise both MLS1 and MLS2 routes
-   - Clients use HSRP virtual IP (.1) as gateway
-   - OSPF routing works independently of HSRP
+6. **HSRP + OSPF Compatibility**:
+   - HSRP operates at Layer 3 on all VLANs
+   - OSPF advertises routes for all VLANs through both MLS1 and MLS2
+   - Clients use HSRP virtual IP (.1) as default gateway
+   - OSPF handles inter-VLAN routing and internet path selection
 
-5. **Redundancy**:
-   - If MLS1 fails, traffic can route through MLS2
-   - OSPF will reconverge automatically
-   - HSRP ensures gateway redundancy for end devices
+7. **Dual Internet Redundancy**:
+   - PLDT (EdgeRouter1): Primary path (default metric)
+   - Globe (EdgeRouter2): Backup path (metric 10)
+   - If PLDT fails, all traffic fails over to Globe automatically
+   - Both edge routers redistribute default routes as ASBRs
 
-================================================================================
-                    ALTERNATIVE: ALL INTERFACES IN AREA 0
-================================================================================
+8. **Telephony Services**:
+   - Voice VLAN 150 in Area 0 backbone
+   - EdgeRouters can host telephony DHCP services
+   - Reachable from all VLANs via OSPF routing
+   - IP helper-address can point to EdgeRouter IPs
 
-If you want a simpler design (all interfaces in Area 0):
-
-router ospf 1
-router-id 1.1.1.1
-exit
-
-interface GigabitEthernet0/1
-ip ospf 1 area 0
-exit
-
-interface vlan 10
-ip ospf 1 area 0
-exit
-
-[repeat for all interfaces on all devices]
-
-This is simpler but loses the benefits of area separation.
+9. **Scalability**:
+   - Easy to add new VLANs to appropriate areas
+   - Can create additional areas as needed
+   - Route summarization possible at area boundaries
 
 ================================================================================
-                    OPTIONAL: PASSIVE INTERFACES
+                    ISP DEFAULT ROUTE PREFERENCE
+================================================================================
+
+EdgeRouter1 (PLDT) - Primary Internet:
+  default-information originate always
+  (uses default metric, typically 1 or 20)
+
+EdgeRouter2 (Globe) - Backup Internet:
+  default-information originate always metric 10
+  (higher metric = less preferred)
+
+Result: All internal devices will prefer PLDT for internet access.
+If PLDT fails, Globe becomes active automatically.
+
+To change preference, adjust metrics:
+  Lower metric = preferred path
+  Higher metric = backup path
+
+================================================================================
+                    OPTIONAL: PASSIVE INTERFACES (RECOMMENDED)
 ================================================================================
 
 To prevent OSPF hellos on end-user VLANs (security/efficiency):
@@ -366,6 +514,31 @@ exit
 This advertises the networks but doesn't try to form neighbor relationships
 on end-user VLANs (good practice for security).
 
-Keep VLAN 99 (Management) active for potential future OSPF devices.
+Keep VLAN 99 (Management) and Gi0/1 active for OSPF adjacencies.
+
+================================================================================
+                    AREA BOUNDARY SUMMARY (OPTIONAL ADVANCED)
+================================================================================
+
+To reduce routing table size, you can summarize at area boundaries:
+
+MLS1 & MLS2:
+configure terminal
+router ospf 1
+
+! Summarize Area 1 networks (192.168.10.0, 192.168.20.0, 192.168.30.0, 192.168.40.0)
+area 1 range 192.168.0.0 255.255.0.0
+
+! Summarize Area 2 networks (192.168.50.0, 192.168.60.0)
+area 2 range 192.168.0.0 255.255.0.0
+
+! Summarize Area 3 networks (192.168.70.0, 192.168.80.0)
+area 3 range 192.168.0.0 255.255.0.0
+
+exit
+exit
+
+NOTE: Only implement this if you understand route summarization.
+For learning/smaller networks, you can skip this.
 
 ================================================================================
