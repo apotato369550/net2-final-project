@@ -279,16 +279,16 @@ exit
 !                           VLAN 10 - Reception
 ! ============================================================================
 interface vlan 10
-ip address 192.168.10.13 255.255.255.0
+ip address 192.168.10.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:10::13/64
+ipv6 address 2001:DB8:A:10::3/64
 ipv6 nd prefix 2001:DB8:A:10::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 10 ip 192.168.10.11
+standby 10 ip 192.168.10.1
 standby 10 priority 100
 standby 10 preempt
-standby 10 ipv6 2001:DB8:A:10::11
+standby 10 ipv6 2001:DB8:A:10::1
 no shutdown
 exit
 
@@ -296,16 +296,16 @@ exit
 !                           VLAN 20 - Administration
 ! ============================================================================
 interface vlan 20
-ip address 192.168.20.13 255.255.255.0
+ip address 192.168.20.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:20::13/64
+ipv6 address 2001:DB8:A:20::3/64
 ipv6 nd prefix 2001:DB8:A:20::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 20 ip 192.168.20.11
+standby 20 ip 192.168.20.1
 standby 20 priority 100
 standby 20 preempt
-standby 20 ipv6 2001:DB8:A:20::11
+standby 20 ipv6 2001:DB8:A:20::1
 no shutdown
 exit
 
@@ -313,16 +313,16 @@ exit
 !                           VLAN 30 - Dispatch
 ! ============================================================================
 interface vlan 30
-ip address 192.168.30.13 255.255.255.0
+ip address 192.168.30.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:30::13/64
+ipv6 address 2001:DB8:A:30::3/64
 ipv6 nd prefix 2001:DB8:A:30::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 30 ip 192.168.30.11
+standby 30 ip 192.168.30.1
 standby 30 priority 100
 standby 30 preempt
-standby 30 ipv6 2001:DB8:A:30::11
+standby 30 ipv6 2001:DB8:A:30::1
 no shutdown
 exit
 
@@ -330,16 +330,16 @@ exit
 !                           VLAN 40 - Inventory
 ! ============================================================================
 interface vlan 40
-ip address 192.168.40.13 255.255.255.0
+ip address 192.168.40.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:40::13/64
+ipv6 address 2001:DB8:A:40::3/64
 ipv6 nd prefix 2001:DB8:A:40::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 40 ip 192.168.40.11
+standby 40 ip 192.168.40.1
 standby 40 priority 100
 standby 40 preempt
-standby 40 ipv6 2001:DB8:A:40::11
+standby 40 ipv6 2001:DB8:A:40::1
 no shutdown
 exit
 
@@ -347,16 +347,16 @@ exit
 !                           VLAN 50 - IT
 ! ============================================================================
 interface vlan 50
-ip address 192.168.50.13 255.255.255.0
+ip address 192.168.50.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:50::13/64
+ipv6 address 2001:DB8:A:50::3/64
 ipv6 nd prefix 2001:DB8:A:50::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 50 ip 192.168.50.11
+standby 50 ip 192.168.50.1
 standby 50 priority 100
 standby 50 preempt
-standby 50 ipv6 2001:DB8:A:50::11
+standby 50 ipv6 2001:DB8:A:50::1
 no shutdown
 exit
 
@@ -364,16 +364,16 @@ exit
 !                           VLAN 60 - Accounting
 ! ============================================================================
 interface vlan 60
-ip address 192.168.60.13 255.255.255.0
+ip address 192.168.60.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:60::13/64
+ipv6 address 2001:DB8:A:60::3/64
 ipv6 nd prefix 2001:DB8:A:60::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 60 ip 192.168.60.11
+standby 60 ip 192.168.60.1
 standby 60 priority 100
 standby 60 preempt
-standby 60 ipv6 2001:DB8:A:60::11
+standby 60 ipv6 2001:DB8:A:60::1
 no shutdown
 exit
 
@@ -381,16 +381,16 @@ exit
 !                           VLAN 70 - Quality Control
 ! ============================================================================
 interface vlan 70
-ip address 192.168.70.13 255.255.255.0
+ip address 192.168.70.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:70::13/64
+ipv6 address 2001:DB8:A:70::3/64
 ipv6 nd prefix 2001:DB8:A:70::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 70 ip 192.168.70.11
+standby 70 ip 192.168.70.1
 standby 70 priority 100
 standby 70 preempt
-standby 70 ipv6 2001:DB8:A:70::11
+standby 70 ipv6 2001:DB8:A:70::1
 no shutdown
 exit
 
@@ -398,16 +398,16 @@ exit
 !                           VLAN 80 - Driver Support
 ! ============================================================================
 interface vlan 80
-ip address 192.168.80.13 255.255.255.0
+ip address 192.168.80.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:80::13/64
+ipv6 address 2001:DB8:A:80::3/64
 ipv6 nd prefix 2001:DB8:A:80::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 80 ip 192.168.80.11
+standby 80 ip 192.168.80.1
 standby 80 priority 100
 standby 80 preempt
-standby 80 ipv6 2001:DB8:A:80::11
+standby 80 ipv6 2001:DB8:A:80::1
 no shutdown
 exit
 
@@ -431,16 +431,16 @@ exit
 !                           VLAN 150 - Voice
 ! ============================================================================
 interface vlan 150
-ip address 192.168.150.13 255.255.255.0
+ip address 192.168.150.3 255.255.255.0
 ip helper-address 192.168.99.4
-ipv6 address 2001:DB8:A:150::13/64
+ipv6 address 2001:DB8:A:150::3/64
 ipv6 nd prefix 2001:DB8:A:150::/64
 no ipv6 nd suppress-ra
 standby version 2
-standby 150 ip 192.168.150.11
+standby 150 ip 192.168.150.1
 standby 150 priority 100
 standby 150 preempt
-standby 150 ipv6 2001:DB8:A:150::11
+standby 150 ipv6 2001:DB8:A:150::1
 no shutdown
 exit
 
@@ -527,10 +527,9 @@ IPv6 SLAAC:
 - Prefix advertisements enabled
 
 Data VLAN Addressing:
-- .1-.10: Reserved for admin use
-- .11: Virtual IP (HSRP gateway)
-- .12: MLS1 SVI IP
-- .13: MLS2 SVI IP
-- .14+: Available for DHCP pool
+- .1: Virtual IP (HSRP gateway)
+- .2: MLS1 SVI IP
+- .3: MLS2 SVI IP
+- .4+: Available for DHCP pool
 
 ================================================================================

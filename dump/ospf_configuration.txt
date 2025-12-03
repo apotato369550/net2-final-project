@@ -1,0 +1,371 @@
+================================================================================
+                    OSPF AREA CONFIGURATION
+================================================================================
+
+TOPOLOGY:
+---------
+Area 1: MLS1 ←→ EdgeRouter1 (192.168.200.0/30)
+Area 0: Internal Campus (All VLANs + MLS1 ↔ MLS2)
+Area 2: MLS2 ←→ EdgeRouter2 (192.168.201.0/30)
+
+MLS1 and MLS2 = ABRs (Area Border Routers)
+EdgeRouter1 and EdgeRouter2 = ASBR candidates (if connecting to ISP/external networks)
+
+INTERFACE ASSIGNMENTS:
+----------------------
+MLS1:
+  - Gi0/1 (to EdgeRouter1): 192.168.200.1/30 → Area 1
+  - All SVIs (VLAN 10-150): → Area 0
+
+MLS2:
+  - Gi0/1 (to EdgeRouter2): 192.168.201.1/30 → Area 2
+  - All SVIs (VLAN 10-150): → Area 0
+
+EdgeRouter1:
+  - Interface to MLS1: 192.168.200.2/30 → Area 1
+
+EdgeRouter2:
+  - Interface to MLS2: 192.168.201.2/30 → Area 2
+
+================================================================================
+                    MLS1 OSPF CONFIGURATION
+================================================================================
+
+enable
+configure terminal
+
+! Enable OSPF Process 1
+router ospf 1
+router-id 1.1.1.1
+log-adjacency-changes
+exit
+
+! Configure Area 1 (External Connection to EdgeRouter1)
+interface GigabitEthernet0/1
+ip ospf 1 area 1
+no shutdown
+exit
+
+! Configure Area 0 (Internal Networks - All SVIs)
+interface vlan 10
+ip ospf 1 area 0
+exit
+
+interface vlan 20
+ip ospf 1 area 0
+exit
+
+interface vlan 30
+ip ospf 1 area 0
+exit
+
+interface vlan 40
+ip ospf 1 area 0
+exit
+
+interface vlan 50
+ip ospf 1 area 0
+exit
+
+interface vlan 60
+ip ospf 1 area 0
+exit
+
+interface vlan 70
+ip ospf 1 area 0
+exit
+
+interface vlan 80
+ip ospf 1 area 0
+exit
+
+interface vlan 99
+ip ospf 1 area 0
+exit
+
+interface vlan 150
+ip ospf 1 area 0
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    MLS2 OSPF CONFIGURATION
+================================================================================
+
+enable
+configure terminal
+
+! Enable OSPF Process 1
+router ospf 1
+router-id 2.2.2.2
+log-adjacency-changes
+exit
+
+! Configure Area 2 (External Connection to EdgeRouter2)
+interface GigabitEthernet0/1
+ip ospf 1 area 2
+no shutdown
+exit
+
+! Configure Area 0 (Internal Networks - All SVIs)
+interface vlan 10
+ip ospf 1 area 0
+exit
+
+interface vlan 20
+ip ospf 1 area 0
+exit
+
+interface vlan 30
+ip ospf 1 area 0
+exit
+
+interface vlan 40
+ip ospf 1 area 0
+exit
+
+interface vlan 50
+ip ospf 1 area 0
+exit
+
+interface vlan 60
+ip ospf 1 area 0
+exit
+
+interface vlan 70
+ip ospf 1 area 0
+exit
+
+interface vlan 80
+ip ospf 1 area 0
+exit
+
+interface vlan 99
+ip ospf 1 area 0
+exit
+
+interface vlan 150
+ip ospf 1 area 0
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    EDGEROUTER1 OSPF CONFIGURATION
+================================================================================
+
+enable
+configure terminal
+
+! Enable OSPF Process 1
+router ospf 1
+router-id 10.10.10.1
+log-adjacency-changes
+exit
+
+! Configure the interface to MLS1 in Area 1
+! (Replace with your actual interface name - e.g., Gi0/0, Fa0/0, etc.)
+interface GigabitEthernet0/0
+ip ospf 1 area 1
+no shutdown
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    EDGEROUTER2 OSPF CONFIGURATION
+================================================================================
+
+enable
+configure terminal
+
+! Enable OSPF Process 1
+router ospf 1
+router-id 20.20.20.2
+log-adjacency-changes
+exit
+
+! Configure the interface to MLS2 in Area 2
+! (Replace with your actual interface name - e.g., Gi0/0, Fa0/0, etc.)
+interface GigabitEthernet0/0
+ip ospf 1 area 2
+no shutdown
+exit
+
+exit
+copy running-config startup-config
+
+================================================================================
+                    VERIFICATION COMMANDS
+================================================================================
+
+! Check OSPF neighbors (should see adjacencies form):
+show ip ospf neighbor
+
+! Check OSPF routing table:
+show ip route ospf
+
+! Check OSPF interface status:
+show ip ospf interface brief
+
+! Check OSPF areas:
+show ip ospf
+
+! Check OSPF database:
+show ip ospf database
+
+! Detailed OSPF info per interface:
+show ip ospf interface GigabitEthernet0/1
+show ip ospf interface vlan 10
+
+! Check which areas the router participates in:
+show ip ospf border-routers
+
+! Test connectivity:
+ping 192.168.200.2
+ping 192.168.201.2
+
+================================================================================
+                    TROUBLESHOOTING
+================================================================================
+
+If OSPF neighbors don't form:
+
+1. Check IP connectivity:
+   ping 192.168.200.2  (from MLS1)
+   ping 192.168.201.2  (from MLS2)
+
+2. Verify OSPF is enabled on interfaces:
+   show ip ospf interface brief
+
+3. Check for area mismatches:
+   show ip ospf interface GigabitEthernet0/1
+
+4. Verify router IDs are unique:
+   show ip ospf
+
+5. Check for authentication mismatches (if configured):
+   show ip ospf interface
+
+6. Verify no passive interface blocking:
+   show ip ospf interface | include Passive
+
+Common issues:
+- Area number mismatch between neighbors
+- Network type mismatch (broadcast vs point-to-point)
+- Authentication mismatch
+- Passive interface enabled on wrong interface
+
+================================================================================
+                    NETWORK DIAGRAM
+================================================================================
+
+                        [Internet/ISP]
+                              |
+              +---------------+----------------+
+              |                                |
+       [EdgeRouter1]                    [EdgeRouter2]
+       Area 1 ASBR?                     Area 2 ASBR?
+       192.168.200.2                    192.168.201.2
+              |                                |
+              | Area 1                         | Area 2
+              | 192.168.200.0/30               | 192.168.201.0/30
+              |                                |
+       192.168.200.1                    192.168.201.1
+          [MLS1]                            [MLS2]
+        ABR (Area 0 + 1)                ABR (Area 0 + 2)
+        Priority 110                     Priority 100
+              |                                |
+              +----------- Area 0 -------------+
+                    (All VLANs 10-150)
+                    Internal Campus Network
+                    HSRP Active/Standby
+
+Area 0: Backbone (all internal VLANs)
+Area 1: MLS1 ↔ EdgeRouter1 connection
+Area 2: MLS2 ↔ EdgeRouter2 connection
+
+================================================================================
+                    KEY POINTS
+================================================================================
+
+Why this design?
+
+1. **Area 0 for internal networks**: All SVIs are in Area 0, forming the backbone
+   - This allows all internal VLANs to communicate efficiently
+   - HSRP works within Area 0 seamlessly
+
+2. **Area 1 and Area 2 for external connections**:
+   - Isolates external routing from internal
+   - Easier to apply filtering/summarization at ABR
+   - Cleaner separation of concerns
+
+3. **MLS1 and MLS2 as ABRs**:
+   - They connect Area 0 to Areas 1 and 2
+   - Can perform route summarization
+   - Can filter routes between areas if needed
+
+4. **HSRP compatibility**:
+   - HSRP operates at Layer 3 within Area 0
+   - OSPF will advertise both MLS1 and MLS2 routes
+   - Clients use HSRP virtual IP (.1) as gateway
+   - OSPF routing works independently of HSRP
+
+5. **Redundancy**:
+   - If MLS1 fails, traffic can route through MLS2
+   - OSPF will reconverge automatically
+   - HSRP ensures gateway redundancy for end devices
+
+================================================================================
+                    ALTERNATIVE: ALL INTERFACES IN AREA 0
+================================================================================
+
+If you want a simpler design (all interfaces in Area 0):
+
+router ospf 1
+router-id 1.1.1.1
+exit
+
+interface GigabitEthernet0/1
+ip ospf 1 area 0
+exit
+
+interface vlan 10
+ip ospf 1 area 0
+exit
+
+[repeat for all interfaces on all devices]
+
+This is simpler but loses the benefits of area separation.
+
+================================================================================
+                    OPTIONAL: PASSIVE INTERFACES
+================================================================================
+
+To prevent OSPF hellos on end-user VLANs (security/efficiency):
+
+MLS1 & MLS2:
+configure terminal
+router ospf 1
+passive-interface vlan 10
+passive-interface vlan 20
+passive-interface vlan 30
+passive-interface vlan 40
+passive-interface vlan 50
+passive-interface vlan 60
+passive-interface vlan 70
+passive-interface vlan 80
+passive-interface vlan 150
+exit
+exit
+
+This advertises the networks but doesn't try to form neighbor relationships
+on end-user VLANs (good practice for security).
+
+Keep VLAN 99 (Management) active for potential future OSPF devices.
+
+================================================================================
