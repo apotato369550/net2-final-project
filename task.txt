@@ -1,0 +1,138 @@
+main branch
+ip addressing
+192.168.x.0/24
+x = 10, 20, 30, 40, 50, 60, 70, 80, 99 (admin), 150 (voice)
+x is also vlan number
+
+branch 1
+ip addressing
+100.100.x.0/24
+x = 10, 20, 30, 99 (admin), 150 (voice)
+x is also vlan number
+
+branch 2
+ip addressing
+200.200.x.0/24
+x = 10, 20, 30, 99 (admin), 150 (voice)
+x is also vlan number
+
+tasks (1 by one, standard acl if possible. on either mls on main branch or edge router on sub-branches)
+
+1. deny computer 1 in dept (vlan) 1 network to pint any comp from office (vlan)
+
+access-list 100 deny icmp 100.100.100.12 0.0.0.0 192.168.40.0 0.0.0.255 echo
+access-list 100 permit ip any any
+int vlan 40
+ip access-group 100 out
+
+
+# 1 - branch 1 router
+conf t
+access-list 100 deny icmp 200.200.10.10 0.0.0.244 192.168.40.0 0.0.0.255 echo
+access-list 100 permit ip any any
+interface fa0/1.10
+ip access-group 100 in
+end
+
+# 2 - mls
+access-list 101 permit tcp 192.168.0.0 0.0.255.255 any eq 22
+access-list 101 deny tcp 100.100.0.0 0.0.255.255 any eq 22
+access-list 101 deny tcp 200.200.0.0 0.0.255.255 any eq 22
+access-list 101 permit ip any any
+
+conf t
+line vty 0 15
+access-class 101 in
+
+# 3 - branch 1 router
+access-list 102 deny ip 100.100.150.0 0.0.0.255 192.168.150.0 0.0.0.255
+access-list 102 permit ip any any
+
+conf t
+interface fa0/1.150
+ip access-group 102 in
+
+# 4 - mls
+// deny all phone calls to office 3
+office three phones
+0060.2fed.a058 - 192.168.150.27
+0001.6474.6639 - 192.168.150.29
+// from branch 3 (main_office)
+voice vlan 192.168.150.0/30
+ip scheme 192.168.0.0/30
+
+// except office 2 from branch 2
+// office 2 branch 2 phones
+office 2 branch 2 details
+telephone mac address - 0003.e4c6.7c88
+telephone ip address - 100.100.150.11
+
+// what commands? what to put?? where to put??
+
+access-list 103 permit ip host 100.100.150.11 host 192.168.150.27
+access-list 103 permit ip host 100.100.150.11 host 192.168.150.29
+access-list 103 deny ip any host 192.168.150.27
+access-list 103 deny ip any host 192.168.150.29
+access-list 103 permit ip any any
+
+interface vlan 150
+ip access-group 103 in
+
+
+5 - mls
+permit all computer to access websites from the internet: 192.168.x.x 100.100.x.x 200.200.x.x
+only one office from branches 1, 2, and 3 (choose vlan 10 for all of them: 192.168.10.0, 100.100.10.0, 200.200.10.0 - all /24) can download and upload files using FTP
+the rest are blocked
+
+access-list 104 permit tcp any any eq 80
+access-list 104 permit tcp any any eq 443
+access-list 104 permit tcp 192.168.10.0 0.0.0.255 any eq 21
+access-list 104 permit tcp 192.168.10.0 0.0.0.255 any eq 20
+access-list 104 deny tcp any any eq 21
+access-list 104 deny tcp any any eq 20
+access-list 104 permit ip any any
+
+! Apply on each VLAN interface going out EXCEPT FOR vlan 10
+
+mls
+interface vlan 20
+ip access-group 104 in
+interface vlan 30
+ip access-group 104 in
+interface vlan 99
+ip access-group 104 in
+interface vlan 150
+ip access-group 104 in
+interface vlan 40
+ip access-group 104 in
+interface vlan 50
+ip access-group 104 in
+interface vlan 60
+ip access-group 104 in
+interface vlan 70
+ip access-group 104 in
+interface vlan 80
+ip access-group 104 in
+
+-- branch 1 edgerouter ---
+access-list 104 permit tcp any any eq 80
+access-list 104 permit tcp any any eq 443
+access-list 104 permit tcp 100.100.10.0 0.0.0.255 any eq 21
+access-list 104 permit tcp 100.100.10.0 0.0.0.255 any eq 20
+access-list 104 deny tcp any any eq 21
+access-list 104 deny tcp any any eq 20
+access-list 104 permit ip any any
+interface fa0/1.10
+ip access-group 104 in
+
+-- branch 2 edgerouter --
+conf t
+access-list 104 permit tcp any any eq 80
+access-list 104 permit tcp any any eq 443
+access-list 104 permit tcp 200.200.10.0 0.0.0.255 any eq 21
+access-list 104 permit tcp 200.200.10.0 0.0.0.255 any eq 20
+access-list 104 deny tcp any any eq 21
+access-list 104 deny tcp any any eq 20
+access-list 104 permit ip any any
+interface g0/1.10
+ip access-group 104 in
