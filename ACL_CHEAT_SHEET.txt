@@ -1,0 +1,341 @@
+================================================================================
+                    ACL CHEAT SHEET - NETWORKING FINALS PROJECT
+================================================================================
+
+PROJECT IP ADDRESSING SCHEME:
+-----------------------------
+Main Branch:    192.168.x.0/24
+                x = 10, 20, 30, 40, 50, 60, 70, 80, 99 (admin), 150 (voice)
+
+Branch 1:       100.100.x.0/24
+                x = 10, 20, 30, 99 (admin), 150 (voice)
+
+Branch 2:       200.200.x.0/24
+                x = 10, 20, 30, 99 (admin), 150 (voice)
+
+Note: x = VLAN number
+
+
+================================================================================
+                          STANDARD ACCESS LISTS (1-99)
+================================================================================
+
+BASIC SYNTAX:
+-------------
+Router(config)# access-list [NUMBER] [permit|deny] [SOURCE] [WILDCARD]
+Router(config-if)# ip access-group [NUMBER] [in|out]
+
+WILDCARD MASK QUICK REFERENCE:
+------------------------------
+/24 network = 0.0.0.255
+/25 network = 0.0.0.127
+/26 network = 0.0.0.63
+/27 network = 0.0.0.31
+/28 network = 0.0.0.15
+Single host = 0.0.0.0 (or use "host" keyword)
+Any host    = 255.255.255.255 (or use "any" keyword)
+
+
+STANDARD ACL EXAMPLES FOR THIS PROJECT:
+----------------------------------------
+
+Example 1: Deny VLAN 10 (Dept 1) from accessing VLAN 20 (Office) in Main Branch
+-------------------------------------------------------------------------------
+! Block traffic from 192.168.10.0/24 to 192.168.20.0/24
+Router(config)# access-list 10 deny 192.168.10.0 0.0.0.255
+Router(config)# access-list 10 permit any
+Router(config)# interface vlan 20
+Router(config-if)# ip access-group 10 in
+
+
+Example 2: Deny specific computer (192.168.10.5) from any network
+------------------------------------------------------------------
+Router(config)# access-list 11 deny host 192.168.10.5
+Router(config)# access-list 11 permit any
+Router(config-if)# ip access-group 11 in
+
+
+Example 3: Allow only Admin VLAN (99) to access network devices
+----------------------------------------------------------------
+Router(config)# access-list 12 permit 192.168.99.0 0.0.0.255
+Router(config)# access-list 12 deny any
+Router(config-if)# ip access-group 12 in
+
+
+Example 4: Block entire Branch 1 from accessing Main Branch VLAN 30
+--------------------------------------------------------------------
+Router(config)# access-list 13 deny 100.100.0.0 0.0.255.255
+Router(config)# access-list 13 permit any
+Router(config)# interface vlan 30
+Router(config-if)# ip access-group 13 in
+
+
+Example 5: Deny Voice VLAN from accessing data networks (Main Branch)
+----------------------------------------------------------------------
+Router(config)# access-list 14 deny 192.168.150.0 0.0.0.255
+Router(config)# access-list 14 permit any
+
+
+================================================================================
+                         EXTENDED ACCESS LISTS (100-199)
+================================================================================
+
+BASIC SYNTAX:
+-------------
+Router(config)# access-list [NUMBER] [permit|deny] [PROTOCOL] [SOURCE] [WILDCARD]
+                [DEST] [WILDCARD] [PORT/OPTIONS]
+Router(config-if)# ip access-group [NUMBER] [in|out]
+
+COMMON PROTOCOLS & PORT NUMBERS:
+--------------------------------
+ICMP (ping)         - protocol: icmp
+SSH                 - protocol: tcp, port: 22
+FTP (Data)          - protocol: tcp, port: 20
+FTP (Control)       - protocol: tcp, port: 21
+Telnet              - protocol: tcp, port: 23
+SMTP                - protocol: tcp, port: 25
+DNS                 - protocol: udp, port: 53
+HTTP                - protocol: tcp, port: 80
+HTTPS               - protocol: tcp, port: 443
+RDP                 - protocol: tcp, port: 3389
+
+
+EXTENDED ACL EXAMPLES FOR THIS PROJECT:
+----------------------------------------
+
+Example 1: Deny PING from VLAN 10 to VLAN 20 (Main Branch)
+-----------------------------------------------------------
+! Block ICMP echo requests from 192.168.10.0/24 to 192.168.20.0/24
+Router(config)# access-list 100 deny icmp 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255 echo
+Router(config)# access-list 100 permit ip any any
+Router(config-if)# ip access-group 100 in
+
+
+Example 2: Deny specific computer from PING (192.168.10.1 → any)
+-----------------------------------------------------------------
+Router(config)# access-list 101 deny icmp host 192.168.10.1 any echo
+Router(config)# access-list 101 permit ip any any
+Router(config-if)# ip access-group 101 in
+
+
+Example 3: Allow only SSH from Admin VLAN, deny all other protocols
+--------------------------------------------------------------------
+Router(config)# access-list 102 permit tcp 192.168.99.0 0.0.0.255 any eq 22
+Router(config)# access-list 102 deny ip any any
+Router(config-if)# ip access-group 102 in
+
+
+Example 4: Block FTP access from Branch 1 VLAN 10 to Main Branch
+-----------------------------------------------------------------
+! Block both FTP control (21) and data (20) channels
+Router(config)# access-list 103 deny tcp 100.100.10.0 0.0.0.255 192.168.0.0 0.0.255.255 eq 21
+Router(config)# access-list 103 deny tcp 100.100.10.0 0.0.0.255 192.168.0.0 0.0.255.255 eq 20
+Router(config)# access-list 103 permit ip any any
+Router(config-if)# ip access-group 103 out
+
+
+Example 5: Allow SSH only from Admin VLAN to specific server
+-------------------------------------------------------------
+Router(config)# access-list 104 permit tcp 192.168.99.0 0.0.0.255 host 192.168.80.10 eq 22
+Router(config)# access-list 104 deny tcp any host 192.168.80.10 eq 22
+Router(config)# access-list 104 permit ip any any
+
+
+Example 6: Block FTP uploads but allow downloads (VLAN 10 → VLAN 80)
+---------------------------------------------------------------------
+! Deny active FTP data connection (port 20 from server)
+Router(config)# access-list 105 deny tcp 192.168.80.0 0.0.0.255 eq 20 192.168.10.0 0.0.0.255
+! Allow FTP control channel (read-only possible)
+Router(config)# access-list 105 permit tcp 192.168.10.0 0.0.0.255 192.168.80.0 0.0.0.255 eq 21
+Router(config)# access-list 105 permit ip any any
+
+
+Example 7: Deny all PING between Branch 1 and Branch 2
+-------------------------------------------------------
+Router(config)# access-list 106 deny icmp 100.100.0.0 0.0.255.255 200.200.0.0 0.0.255.255
+Router(config)# access-list 106 deny icmp 200.200.0.0 0.0.255.255 100.100.0.0 0.0.255.255
+Router(config)# access-list 106 permit ip any any
+
+
+Example 8: Permit SSH and ICMP from Admin VLAN, deny everything else
+---------------------------------------------------------------------
+Router(config)# access-list 107 permit tcp 192.168.99.0 0.0.0.255 any eq 22
+Router(config)# access-list 107 permit icmp 192.168.99.0 0.0.0.255 any
+Router(config)# access-list 107 deny ip any any
+
+
+Example 9: Block inter-VLAN ping on Main Branch, allow intra-VLAN
+------------------------------------------------------------------
+Router(config)# access-list 108 deny icmp 192.168.10.0 0.0.0.255 192.168.20.0 0.0.0.255
+Router(config)# access-list 108 deny icmp 192.168.10.0 0.0.0.255 192.168.30.0 0.0.0.255
+Router(config)# access-list 108 permit icmp 192.168.10.0 0.0.0.255 192.168.10.0 0.0.0.255
+Router(config)# access-list 108 permit ip any any
+
+
+Example 10: Deny FTP/SSH from Voice VLAN (security measure)
+------------------------------------------------------------
+Router(config)# access-list 109 deny tcp 192.168.150.0 0.0.0.255 any eq 21
+Router(config)# access-list 109 deny tcp 192.168.150.0 0.0.0.255 any eq 20
+Router(config)# access-list 109 deny tcp 192.168.150.0 0.0.0.255 any eq 22
+Router(config)# access-list 109 permit ip any any
+
+
+================================================================================
+                              NAMED ACCESS LISTS
+================================================================================
+
+SYNTAX:
+-------
+Router(config)# ip access-list [standard|extended] [NAME]
+Router(config-ext-nacl)# [permit|deny] [parameters]
+Router(config-if)# ip access-group [NAME] [in|out]
+
+
+NAMED ACL EXAMPLES:
+-------------------
+
+Example 1: Named Standard ACL - Block VLAN 10 Main Branch
+----------------------------------------------------------
+Router(config)# ip access-list standard BLOCK_VLAN10
+Router(config-std-nacl)# deny 192.168.10.0 0.0.0.255
+Router(config-std-nacl)# permit any
+Router(config-std-nacl)# exit
+Router(config)# interface vlan 20
+Router(config-if)# ip access-group BLOCK_VLAN10 in
+
+
+Example 2: Named Extended ACL - SSH and PING only for Admin
+------------------------------------------------------------
+Router(config)# ip access-list extended ADMIN_ONLY
+Router(config-ext-nacl)# permit tcp 192.168.99.0 0.0.0.255 any eq 22
+Router(config-ext-nacl)# permit icmp 192.168.99.0 0.0.0.255 any echo
+Router(config-ext-nacl)# deny ip any any
+Router(config-ext-nacl)# exit
+Router(config-if)# ip access-group ADMIN_ONLY in
+
+
+Example 3: Named Extended ACL - Block FTP from Branch 1
+--------------------------------------------------------
+Router(config)# ip access-list extended NO_FTP_BRANCH1
+Router(config-ext-nacl)# deny tcp 100.100.0.0 0.0.255.255 any eq 21
+Router(config-ext-nacl)# deny tcp 100.100.0.0 0.0.255.255 any eq 20
+Router(config-ext-nacl)# permit ip any any
+Router(config-ext-nacl)# exit
+Router(config-if)# ip access-group NO_FTP_BRANCH1 out
+
+
+================================================================================
+                            ACL APPLICATION TIPS
+================================================================================
+
+WHERE TO APPLY ACLs:
+--------------------
+Standard ACLs:  Apply CLOSE TO DESTINATION
+                (They can only filter based on source IP, so apply near target)
+
+Extended ACLs:  Apply CLOSE TO SOURCE
+                (They filter on source, destination, protocol, port - apply early)
+
+
+INTERFACE DIRECTION:
+--------------------
+IN  = Traffic entering the interface (before routing decision)
+OUT = Traffic exiting the interface (after routing decision)
+
+
+BEST PRACTICES:
+---------------
+1. Always end with implicit deny (already there, but can add explicit "deny any")
+2. Most specific rules first, most general rules last
+3. Use named ACLs for better documentation
+4. Place extended ACLs close to source to save bandwidth
+5. Place standard ACLs close to destination
+6. Use "log" keyword to track ACL hits for troubleshooting
+7. Remember: Only ONE ACL per interface, per direction, per protocol
+
+
+ACL VERIFICATION COMMANDS:
+--------------------------
+Router# show access-lists                    ! View all ACLs
+Router# show access-lists [NUMBER|NAME]      ! View specific ACL
+Router# show ip interface [INTERFACE]        ! See which ACL applied to interface
+Router# show running-config | include access-list  ! Find all ACL configs
+
+
+REMOVING ACLs:
+--------------
+Router(config)# no access-list [NUMBER]              ! Remove numbered ACL
+Router(config)# no ip access-list [standard|extended] [NAME]  ! Remove named ACL
+Router(config-if)# no ip access-group [NUMBER|NAME] [in|out]  ! Remove from interface
+
+
+================================================================================
+                        COMMON SCENARIOS FOR THIS PROJECT
+================================================================================
+
+Scenario 1: Deny computer 1 in VLAN 10 from pinging any computer in VLAN 20 (Main Branch)
+------------------------------------------------------------------------------------------
+METHOD 1 - Standard ACL (on MLS, applied to VLAN 20 interface):
+Router(config)# access-list 1 deny host 192.168.10.1
+Router(config)# access-list 1 permit any
+Router(config)# interface vlan 20
+Router(config-if)# ip access-group 1 in
+
+METHOD 2 - Extended ACL (on MLS, applied to VLAN 10 interface):
+Router(config)# access-list 100 deny icmp host 192.168.10.1 192.168.20.0 0.0.0.255 echo
+Router(config)# access-list 100 permit ip any any
+Router(config)# interface vlan 10
+Router(config-if)# ip access-group 100 in
+
+
+Scenario 2: Block SSH from all Branch 1 users except Admin VLAN
+----------------------------------------------------------------
+Router(config)# access-list 110 permit tcp 100.100.99.0 0.0.0.255 any eq 22
+Router(config)# access-list 110 deny tcp 100.100.0.0 0.0.255.255 any eq 22
+Router(config)# access-list 110 permit ip any any
+Router(config-if)# ip access-group 110 in
+
+
+Scenario 3: Allow FTP only between specific VLANs (VLAN 80 ↔ VLAN 30 Main)
+---------------------------------------------------------------------------
+Router(config)# access-list 120 permit tcp 192.168.30.0 0.0.0.255 192.168.80.0 0.0.0.255 eq 21
+Router(config)# access-list 120 permit tcp 192.168.30.0 0.0.0.255 192.168.80.0 0.0.0.255 eq 20
+Router(config)# access-list 120 permit tcp 192.168.80.0 0.0.0.255 192.168.30.0 0.0.0.255 eq 21
+Router(config)# access-list 120 permit tcp 192.168.80.0 0.0.0.255 192.168.30.0 0.0.0.255 eq 20
+Router(config)# access-list 120 deny tcp any any eq 21
+Router(config)# access-list 120 deny tcp any any eq 20
+Router(config)# access-list 120 permit ip any any
+
+
+Scenario 4: Block all ICMP from Voice VLANs (security hardening)
+-----------------------------------------------------------------
+Router(config)# access-list 130 deny icmp 192.168.150.0 0.0.0.255 any
+Router(config)# access-list 130 deny icmp 100.100.150.0 0.0.0.255 any
+Router(config)# access-list 130 deny icmp 200.200.150.0 0.0.0.255 any
+Router(config)# access-list 130 permit ip any any
+
+
+================================================================================
+                            QUICK REFERENCE TABLE
+================================================================================
+
++-------------------+------------------------+---------------------------+
+| Traffic Type      | Protocol               | ACL Syntax Example        |
++-------------------+------------------------+---------------------------+
+| PING              | icmp                   | deny icmp [src] [dst] echo|
+| SSH               | tcp port 22            | deny tcp [src] [dst] eq 22|
+| FTP Control       | tcp port 21            | deny tcp [src] [dst] eq 21|
+| FTP Data          | tcp port 20            | deny tcp [src] [dst] eq 20|
+| All traffic       | ip                     | deny ip [src] [dst]       |
+| Specific host     | host [IP]              | deny ip host 192.168.10.1 |
+| Any source/dest   | any                    | permit ip any any         |
++-------------------+------------------------+---------------------------+
+
+
+================================================================================
+                                END OF CHEAT SHEET
+================================================================================
+Generated for: Networking Finals Project
+IP Scheme: Main (192.168.x.0/24), Branch1 (100.100.x.0/24), Branch2 (200.200.x.0/24)
+Last Updated: 2025-12-04
+================================================================================
