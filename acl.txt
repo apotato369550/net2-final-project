@@ -1,0 +1,102 @@
+﻿Access Control List (ACL) Concepts and Configuration
+- how acls filter traffic, use wildcard masks, creation, placement/implementation
+
+ipv4 acls
+- configure ipv4 acls, use a sequence of numbers to edit existing acls
+
+
+ACL
+- a table that tells a computer operating system which access rights each user has a particulary system object (file directory, indiv. File)
+- each object has a security attribute that identifies its acl
+- a router does not have an acl by default, so by default, a router does not filter traffic
+- in networks, its a table that filters traffic going in and out of the network
+
+what can be controlled:
+telnet/ssh
+web access
+pinging
+traffic
+
+purpose of ACL: packet filtering
+- controls the access to a network by analyzing the incoming and outgoing packets and passing/dropping them based on given criteria (source IP, dest. IP, and the protocol carried in the packet)
+- a router acts as a packet filter when it forwards/denies packets according to filter rules
+- and ACL in this case is a sequential list of permit/deny statements, known as access control entries
+- not just set by the admin, can be set by entities/authority figures (deans, chairs, etc.)
+- creating & implementation are different tasks
+
+access control entries (ACEs) – a sequential list/table of permit/deny statements
+
+access list direction – access lists are applied on the interface of the router and have a direction
+inbound access list – check traffic that is coming into the interface. Filters the packets coming into a specific interface before they are routed to the outbound interface
+outbound access list – check traffic that is going out of the interface. Filters packets after being routed, regardless of the inbound interface
+
+Wildcard Masks in ACLs
+how to compute: take the mask 255.255.255.255 and subtract the subnet mask from it, then you have the wildcard mask
+
+ the zeros in the octets of the wildcard mask are the octets/bits where the rule applies.
+The ones are the bits taht can be ignored
+
+when combining the ip address to be processed and the wildcard mask to be processed, the resulting ip address [range] is to be blocked
+
+default static route uses the mask 0.0.0.0, whose wildcard mask is 255.255.255.255. if we reverse the roles, 0.0.0.0 allows for any IP with any subnet mask
+
+wildcard mask 0.0.0.0 – counts the number of ip addresses in the network
+0.0.0.0 0.0.0.0 – identifies any network with any subnet mask
+
+for a specific host/ip address to have rules applied, use 0.0.0.0 wildcard mask
+to apply a rule to all host/ip addresses, use 255.255.255.255 wildcard mask
+
+right to left – least ordered to highest order bit
+
+192.168.10.0/27
+first 3 subnets to be blocked
+
+0.0.0.0 – host
+
+host 192.168.10.100 
+is the same as
+192.168.10.100 0.0.0.0
+
+0.0.0.0 255.255.255.255
+is the same as
+any
+
+acls should be placed where it has the greatest impact on the efficiency
+standard acl – closer to the destination. Specify as close to the destination as possible
+extended acl – closer/nearer to the source. Locate extended acls as close as possible to the source
+
+placement and type of ACL used may depend on:
+- the extent of the admin’s control
+- bandwidth of networks involved
+- ease of configuration
+
+types of access lists
+standard – looks at source ip address. Number 1-99. very generalized
+extended – looks at source and dest IP, source and dest port, source and dest protocol. More details, granular. Number 100-199. harder to setup, but a lot more refined & harder to screw up
+
+Port Number and Port Names
+
+port 21 - ftp
+port 80 – http
+port 443 – https
+port 25 – email
+
+
+- port number is the logical addres of each application/process that uses a network or the internet to communicate. It uniquely identifies a network-based application on a computer
+- each applicatoin/program is allocated a 16-bit integer port number
+- this number is assigned automatically by the OS,manually by the user, or is set as default for some popular applications
+
+- normally, you’d need an ip address for each task, but needing one can only allow one app at the time, hence the concept of ports. Ip address + port = multitasking
+- implicitly: denies all other people/protocols
+
+deny all
+allow yap
+
+allow yap
+deny all
+
+http is under tcp
+ping? Ftp? ssh
+
+what is better? Permit FIRST! Then deny, since deny is already implicit
+
