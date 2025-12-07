@@ -20,15 +20,9 @@ tasks (1 by one, standard acl if possible. on either mls on main branch or edge 
 
 1. deny computer 1 in dept (vlan) 1 network to pint any comp from office (vlan)
 
-access-list 100 deny icmp 100.100.100.12 0.0.0.0 192.168.40.0 0.0.0.255 echo
-access-list 100 permit ip any any
-int vlan 40
-ip access-group 100 out
-
-
 # 1 - branch 1 router
 conf t
-access-list 100 deny icmp host 200.200.200.10 192.168.40.0 0.0.0.255 
+access-list 100 deny icmp host 100.100.10.11 192.168.40.0 0.0.0.255 
 access-list 100 permit ip any any
 interface fa0/1.10
 ip access-group 100 in
@@ -45,12 +39,20 @@ line vty 0 15
 access-class 101 in
 
 # 3 - branch 1 router
-access-list 102 deny ip 100.100.150.0 0.0.0.255 192.168.150.0 0.0.0.255
+# deny phone call from one vlan's phone to another vlan's phone
+access-list 102 deny ip 100.100.150.0 0.0.0.255 192.168.200.0 0.0.0.255
 access-list 102 permit ip any any
+
+access-list 103 deny ip 192.168.200.0 0.0.0.255 100.100.150.0 0.0.0.255
+access-list 103 permit ip any any
+
 
 conf t
 interface fa0/1.150
-ip access-group 102 in
+ip access-group 102 out
+
+interface fa0/1.150
+ip access-group 103 in
 
 # 4 - mls
 // deny all phone calls to office 3
